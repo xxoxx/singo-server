@@ -1,0 +1,31 @@
+yum install wget gcc epel-release git
+yum -y install python36 python36-devel
+curl --silent --location https://rpm.nodesource.com/setup_8.x | sudo bash -
+yum install nodejs
+
+# cd ~
+# python3.6 -m venv py3
+# source py3/bin/activate
+# # pip install --upgrade pip setuptools
+
+yum install mariadb-server mariadb mariadb-devel
+systemctl start mariadb
+systemctl enable mariadb
+# 首次登陆设置密码
+mysql -u root -p
+> set password=password("yourpassword");
+> create database devops default charset 'utf8';
+> grant all on devops.* to 'devops'@'127.0.0.1' identified by 'lemon1912';
+> flush privileges;
+
+# cd /opt
+# git clone http://172.16.102.11/singo/devops-web.git
+# npm install -g cnpm --registry=https://registry.npm.taobao.org
+# cnpm install
+# cnpm run dev
+
+# cd /opt
+# git clone http://172.16.102.11/singo/devops-server.git
+# cd devops-server
+# pip install -r requirements/requirements.txt
+

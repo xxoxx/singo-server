@@ -1,0 +1,140 @@
+__author__ = 'singo'
+__datetime__ = '2019/3/4 4:18 PM '
+
+from rest_framework.views import APIView
+from rest_framework import generics
+from rest_framework import status, viewsets, mixins
+from rest_framework.response import Response
+from rest_framework import authentication, permissions
+from django.apps import apps
+from django.contrib.auth.models import Permission
+from django.shortcuts import get_object_or_404
+from django.contrib.contenttypes.models import ContentType
+
+from workOrder.models import WorkOrder
+from django.contrib.auth import get_user_model
+from common.utils import Bcolor
+from .serializers import AuthPermissonSerializers
+from common.utils import logger
+
+User = get_user_model()
+
+def model_import(name):
+    components = name.split('.')
+    mod = __import__(components[0])
+    for comp in components[1:]:
+        mod = getattr(mod, comp)
+    return mod
+
+
+class UserPermissionsAPI(APIView):
+    '''
+    get:
+        获取用户的所有权限不包括所在组
+    put:
+        设置用户权限
+    '''
+    permission_classes = (permissions.IsAuthenticated,)
+    # lookup_field = 'pk'
+    # lookup_value_regex = '[a-z0-9\-]+'
+
+    def get_object(self):
+        user_id = self.kwargs.get('user_id')
+        return get_object_or_404(User, pk=user_id)
+
+
+    # def get(self, request, *args, **kwargs):
+    #     from django.contrib.auth.models import Group
+    #     user = self.get_object()
+    #     permissions1 = user.get_all_permissions()
+    #
+    #     g = Group.objects.get(pk='1')
+    #
+    #     from django.contrib.auth.models import Permission
+    #     permissions = Permission.objects.filter(user=user)
+    #     print([x.codename for x in Permission.objects.filter(user=user)])
+    #
+    #     # p0 = Permission.objects.get(codename='delete_workorder')
+    #     # p1 = Permission.objects.get(codename='change_workorder')
+    #     # p2 = Permission.objects.get(codename='add_workorder')
+    #     # g.permissions.add(*[p0, p1, p2])
+    #     print(user.get_group_permissions())
+    #     print(user.get_all_permissions())
+    #
+    #     # g = Group.objects.get(pk='1')
+    #     # g.user_set.add(user)
+    #     # user.groups
+    #     return Response(permissions1)
+
+    def get(self, request, *args, **kwargs):
+        print('===================')
+        user = self.get_object()
+        permissions = ['{}.{}'.format(p.content_type.app_label, p.codename)
+                       for p in Permission.objects.filter(user=user)]
+        return Response(permissions)
+
+    def put(self, request, *args, **kwargs):
+        '''
+        :param request:
+        :param args:
+        :param kwargs:
+                    {
+                       "appName": "workOrder",
+                       "model": "workOrder.models.WorkOrder",
+                       "codenames": ["delete", "delete_workorder"]
+                    }
+        :return:
+        '''
+        user = self.get_object()
+        try:
+            app_name = request.data.get('appName')
+            codenames = request.data.get('codenames')
+            app = apps.get_app_config(app_name)
+            model =  app.get_model(request.data.get('model'))
+            # app下所有模块
+            # models = [model.__module__+'.' + model.__name__ for name, model in app.models.items()]
+            # 判断传入模块是否合法
+            # if model in models:
+            #     mod = model_import(model)
+            #     content_type = ContentType.objects.get_for_model(mod)
+            #     # 获取app模块下的所有权限点
+            #     codenames_all = [permission.codename for permission in Permission.objects.filter(content_type=content_type)]
+            #     # 判断传入权限点是否合法
+            #     if set(codenames).issubset(codenames_all):
+            #         permissions = Permission.objects.filter(content_type=content_type, codename__in=codenames)
+            #         user.user_permissions.add(*permissions)
+            #     else:
+            #         raise Exception('不存在权限点: {}.'.format(set(codenames) - set(codenames_all)))
+            # else:
+            #     raise Exception('不存在模块: {}.'.format(model))
+            content_type = ContentType.objects.get_for_model(model)
+            permissions = Permission.objects.filter(content_type=content_type, codename__in=codenames)
+            user.user_permissions.add(*permissions)
+
+        except Exception as e:
+            logger.error(e)
+            return Response({'detail': str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({'detail':'权限设置成功'})
+
+
+class UserAllPermissionsAPI(APIView):
+    '''
+    get:
+        获取用户所有权限包括所在组
+    '''
+
+    def get_object(self):
+        user_id = self.kwargs.get('user_id')
+        return get_object_or_404(User, pk=user_id)
+
+    def get(self, request, *args, **kwargs):
+        user = self.get_object()
+        permissions = user.get_all_permissions()
+        return Response(permissions)
+
+
+
+
+
+

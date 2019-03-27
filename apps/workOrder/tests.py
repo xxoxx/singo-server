@@ -1,0 +1,2 @@
+{"id":"a49d16b6-e5dd-4a41-92b4-830dd56fbdeb",
+    "title":"幽暗城2","type":0,"contents":"幽暗城2","omment":"","status":0,"result":"","applied":"2019-02-25T17:44:46","completed":"2019-02-25T17:44:46","designator":[{"id":"013bd03c-4c60-4fdd-b04c-9e486575bcfc","name":"叶开"}],"processor":null,"applicant":[{"id":"c1f8daa4-26fa-4bb4-884b-fec62cf89af7","name":"赵国才"}]}
