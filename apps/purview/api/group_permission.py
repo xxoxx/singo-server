@@ -109,4 +109,38 @@ class GroupPermissionsViewset(viewsets.GenericViewSet):
 
 
 
+class GroupPermissionsViewsetV2(viewsets.GenericViewSet):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = PermissionGroupSerializers
+    queryset = Group.objects.all()
+    lookup_field = 'pk'
+    lookup_value_regex = '[0-9]+'
+
+    def update(self, request, *args, **kwargs):
+        '''
+            :param request.data:
+             [
+                "users.add_user",
+                "users.change_user",
+                "users.delete_user"
+            ]
+        '''
+        group = self.get_object()
+        permissions = []
+        try:
+            for permission_node in request.data:
+                permission_node = permission_node.split('.', 1)
+                permission = Permission.objects.get(
+                    content_type__app_label=permission_node[0],
+                    codename=permission_node[1]
+                )
+                permissions.append(permission)
+            group.permissions.set(permissions)
+        except Exception as e:
+            logger.error(e)
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': '设置权限成功'}, status=status.HTTP_204_NO_CONTENT)
+
+
+
 
