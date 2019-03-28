@@ -25,7 +25,8 @@ class UserProfileViewSet(mixins.ListModelMixin,
     search_fields = ('username', 'name')
     ordering_fields = ('username', 'id')
     pagination_class = CustomPagination
-    queryset = User.objects.all()
+    # 过滤superuser
+    queryset = User.objects.filter(is_superuser=0)
 
     @action(detail=False, methods=['get'], name='user-info', url_path='user-info')
     def userInfo(self, request):
