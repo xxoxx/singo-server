@@ -62,10 +62,10 @@ INSTALLED_APPS = [
     'purview.apps.PurviewConfig',
 ]
 
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend', # 这是Django默认的
-    'guardian.backends.ObjectPermissionBackend', # 这是guardian的
-)
+# AUTHENTICATION_BACKENDS = (
+#     'django.contrib.auth.backends.ModelBackend', # 这是Django默认的
+#     'guardian.backends.ObjectPermissionBackend', # 这是guardian的
+# )
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
