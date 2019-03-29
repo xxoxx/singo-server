@@ -35,17 +35,22 @@ class GroupPermissionsViewset(viewsets.GenericViewSet):
         '''
         group = self.get_object()
 
-        try:
-            escape = {'false':False, 'true':True}[request.GET.get('escape', 'true')]
-        except:
-            escape = True
+        # try:
+        #     escape = {'false':False, 'true':True}[request.GET.get('escape', 'true')]
+        # except:
+        #     escape = True
+        #
+        # if escape:
+        #     permissions = ['{}.{}'.format(apps.get_app_config(p.content_type.app_label).verbose_name, p.name)
+        #                     for p in group.permissions.all()]
+        # else:
+        #     permissions = ['{}.{}'.format(p.content_type.app_label, p.codename)
+        #                    for p in group.permissions.all()]
 
-        if escape:
-            permissions = ['{}.{}'.format(apps.get_app_config(p.content_type.app_label).verbose_name, p.name)
-                            for p in group.permissions.all()]
-        else:
-            permissions = ['{}.{}'.format(p.content_type.app_label, p.codename)
-                           for p in group.permissions.all()]
+        permissions = [{'node': '{}.{}'.format(p.content_type.app_label, p.codename),
+                        'nodeName': '{}.{}'.format(apps.get_app_config(p.content_type.app_label).verbose_name, p.name)}
+                       for p in group.permissions.all()
+        ]
 
         return Response(permissions)
 
