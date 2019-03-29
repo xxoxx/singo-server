@@ -16,6 +16,9 @@ class GroupPermissionsViewset(viewsets.GenericViewSet):
     '''
     get:
         获取组权限列表
+        默认返回中文格式的权限点列表:[app名字.权限点名称,...]
+        指定escape=false返回:[appName.codename,....]
+
 
     put:
         设置组权限
@@ -31,8 +34,19 @@ class GroupPermissionsViewset(viewsets.GenericViewSet):
         获取组权限点列表
         '''
         group = self.get_object()
-        permissions = ['{}.{}'.format(p.content_type.app_label, p.codename)
-                       for p in group.permissions.all()]
+
+        try:
+            escape = {'false':False, 'true':True}[request.GET.get('escape', 'true')]
+        except:
+            escape = True
+
+        if escape:
+            permissions = ['{}.{}'.format(apps.get_app_config(p.content_type.app_label).verbose_name, p.name)
+                            for p in group.permissions.all()]
+        else:
+            permissions = ['{}.{}'.format(p.content_type.app_label, p.codename)
+                           for p in group.permissions.all()]
+
         return Response(permissions)
 
     def update(self, request, *args, **kwargs):
