@@ -18,12 +18,15 @@ class AuthPermissonSerializers(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super(AuthPermissonSerializers, self).to_representation(instance)
+        apps.get_app_config(instance.content_type.app_label).verbose_name
         ret['content_type'] = {
             'id': instance.content_type.id,
             'app': instance.content_type.app_label,
             'model': instance.content_type.model
         }
         ret['node'] = '{}.{}'.format(instance.content_type.app_label, instance.codename)
+        ret['nodeName'] = '{}.{}'.format(
+            apps.get_app_config(instance.content_type.app_label).verbose_name, instance.name)
         return ret
 
 class ContentTypeSerializers(serializers.ModelSerializer):
