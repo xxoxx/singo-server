@@ -1,2 +1,26 @@
-{"id":"a49d16b6-e5dd-4a41-92b4-830dd56fbdeb",
-    "title":"幽暗城2","type":0,"contents":"幽暗城2","omment":"","status":0,"result":"","applied":"2019-02-25T17:44:46","completed":"2019-02-25T17:44:46","designator":[{"id":"013bd03c-4c60-4fdd-b04c-9e486575bcfc","name":"叶开"}],"processor":null,"applicant":[{"id":"c1f8daa4-26fa-4bb4-884b-fec62cf89af7","name":"赵国才"}]}
+from ldap3 import Connection,Server,ALL,SUBTREE,MODIFY_REPLACE,SUBTREE,LEVEL, BASE
+
+try:
+    server = Server(host='172.16.102.18',
+                    port=389,
+                    use_ssl=False,
+                    connect_timeout=5)
+    conn = Connection(server,
+                   user='cn=root,dc=ztyc,dc=net',
+                   password='ztyc1234', auto_bind=True)
+
+    # conn.search('dc=ztyc,dc=net','(objectclass=person)')
+    # conn.search('dc=ztyc,dc=net','(objectclass=dcObject)')
+    conn.search(search_base='dc=ztyc,dc=net',
+                search_filter='(objectClass=top)',
+                search_scope=LEVEL
+                )
+    # search_scope = SUBTREE
+    print(conn.entries)
+    print(len(conn.entries))
+except Exception as e:
+    print('======')
+    print(e)
+
+
+

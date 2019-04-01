@@ -58,10 +58,10 @@ class UserGroupSerializer(serializers.ModelSerializer):
         return super(UserGroupSerializer, self).update(instance, validated_data)
 
 class UserUpdateGroupSerializer(serializers.ModelSerializer):
-    groups = serializers.PrimaryKeyRelatedField(many=True, queryset=UserGroup.objects.all())
+    family = serializers.PrimaryKeyRelatedField(many=True, queryset=UserGroup.objects.all())
     class Meta:
         model = User
-        fields = ['id', 'groups']
+        fields = ['id', 'family']
 
 class ChangeUserPasswordSerializer(serializers.ModelSerializer):
     '''

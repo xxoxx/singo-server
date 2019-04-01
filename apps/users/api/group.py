@@ -34,11 +34,11 @@ class UserGroupleViewSet(viewsets.ModelViewSet):
     queryset = UserGroup.objects.all()
 
     perms_map = {
-        'GET': [],
-        'POST': ['{}.create_usergroup'],
-        'PUT': ['{}.update_usergroup'],
-        'PATCH': ['{}.update_usergroup'],
-        'DELETE':['{}.delete_usergroup']
+        'GET': [],   # 这里受限制会导致用户信息无法获取用户组
+        'POST': ['{}.user_group_add'],
+        'PUT': ['{}.user_group_edit'],
+        'PATCH': ['{}.user_group_edit'],
+        'DELETE':['{}.user_group_delete']
     }
 
     @action(detail=False, methods=['get'], name='group-devops',
@@ -48,7 +48,7 @@ class UserGroupleViewSet(viewsets.ModelViewSet):
         获取运维组成员
         '''
         try:
-            group = UserGroup.objects.get(name='devops')
+            group = UserGroup.objects.get(name='运维组')
             members = group.members.all()
             serializer = UserSerializer(members, many=True)
         except Exception as e:

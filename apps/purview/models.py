@@ -9,6 +9,6 @@ class Permission(models.Model):
     name = models.CharField(max_length=128, verbose_name='名称')
 
     class Meta:
-        verbose_name = '权限点'
+        verbose_name = '权限控制'
         verbose_name_plural = verbose_name
         is_purview = True

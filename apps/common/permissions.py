@@ -38,4 +38,5 @@ class DevopsPermission(permissions.BasePermission):
             return True
         app_label = resolve(request.path).app_name
         perms = self.get_required_permissions(request.method, app_label, view.perms_map)
+        print(perms)
         return request.user.has_perms(perms)

@@ -1,0 +1,3 @@
+sudo apt-get install libmysqlclient-dev
+
+mysqldump -u root -pnj532680 devops > devops.sql

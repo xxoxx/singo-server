@@ -1,7 +1,5 @@
 from rest_framework import status, viewsets, mixins
 from rest_framework import generics
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import permissions
@@ -12,6 +10,7 @@ from ..serializers import UserSerializer, UserRegistSerializer
 from ..filters import UserProfileFilter
 from common.pagination import CustomPagination
 from common.permissions import IsSuperuserOrSelf
+from common.permissions import DevopsPermission
 from common.utils import logger
 
 class UserProfileViewSet(mixins.ListModelMixin,
@@ -20,15 +19,28 @@ class UserProfileViewSet(mixins.ListModelMixin,
                          mixins.DestroyModelMixin,
                          viewsets.GenericViewSet):
     serializer_class = UserSerializer
+    permission_classes = (permissions.IsAuthenticated, DevopsPermission)
     # filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filter_class = UserProfileFilter
     search_fields = ('username', 'name')
     ordering_fields = ('username', 'id')
     pagination_class = CustomPagination
-    # 过滤superuser
-    queryset = User.objects.filter(is_superuser=0)
+    queryset = User.objects.filter()
 
-    @action(detail=False, methods=['get'], name='user-info', url_path='user-info')
+    perms_map = {
+        'GET': ['{}.user_list'],
+        'POST': ['{}.user_add'],
+        'PUT': ['{}.user_edit'],
+        'PATCH': ['{}.user_edit'],
+        'DELETE': ['{}.user_delete']
+    }
+
+    def list(self, request, *args, **kwargs):
+        self.queryset = User.objects.filter(is_superuser=0)
+        return super(UserProfileViewSet, self).list(request, *args, **kwargs)
+
+    @action(detail=False, methods=['get'], name='user-info',
+            url_path='user-info', **{'perms_map':{'GET': []}})
     def userInfo(self, request):
         """
         获取当前登陆的用户信息
@@ -58,10 +70,20 @@ class ChangeUserPasswordViewSet(mixins.UpdateModelMixin,
     '''
     queryset = User.objects.all()
     serializer_class = ChangeUserPasswordSerializer
-    permission_classes = (IsSuperuserOrSelf,)
+    permission_classes = (IsSuperuserOrSelf, DevopsPermission)
+
+    perms_map = {
+        'PUT': ['{}.change_password'],
+        'PATCH': ['{}.change_password'],
+    }
+
+    '''
+    修改密码有问题,在serializer里修改无法进行权限控制
+    '''
 
     @action(detail=True, methods=['put', 'patch'], name='Rest Password',
-            url_path='rest', permission_classes=[permissions.IsAdminUser])
+            url_path='rest', permission_classes=[permissions.IsAuthenticated, DevopsPermission],
+            **{'perms_map': {'PUT': ['{}.reset_password'], 'PATCH': ['{}.reset_password']}})
     def rest_password(self, request, pk=None):
         '''
         重置用户密码
@@ -76,26 +98,19 @@ class ChangeUserPasswordViewSet(mixins.UpdateModelMixin,
         send_user_rest_password_mail(user)
         return Response({'detail':'修改密码成功'}, status=200)
 
-class UserUpdateGroupApi(generics.RetrieveUpdateAPIView):
+class UserUpdateGroupApi(generics.UpdateAPIView):
     '''
     put: 更新用户所在组
     '''
+    perms_map = {
+        'PUT': ['{}.user_group_change'],
+        'PATCH': ['{}.user_group_change'],
+    }
+
     queryset = User.objects.all()
     serializer_class = UserUpdateGroupSerializer
-    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    permission_classes = (permissions.IsAuthenticated, DevopsPermission)
 
-# class UserInfoViewset(viewsets.ViewSet):
-#     """
-#     获取当前登陆的用户信息
-#     """
-#     def list(self, request, *args, **kwargs):
-#         from ..serializers import UserSerializer
-#
-#         serializer = UserSerializer(self.request.user)
-#         uri = request.build_absolute_uri('/').strip("/")
-#         data = serializer.data
-#         data['avatar'] = uri + data['avatar']
-#         return Response(data)
 
 '''
 class UserChangePasswordAPI(generics.RetrieveUpdateAPIView):

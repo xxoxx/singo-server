@@ -35,6 +35,14 @@ class WorkOrderViewset(viewsets.ModelViewSet):
     ordering_fields = ('applied',)
     filter_class = WorkOrderFilter
 
+    perms_map = {
+        'GET': ['{}.work_order'],
+        'POST': ['{}.work_order_apply'],
+        'PUT': [],
+        'PATCH': [],
+        'DELETE': []
+    }
+
     def get_queryset(self):
         type = self.request.GET.get('action', None)
         user = self.request.user
