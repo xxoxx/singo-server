@@ -28,7 +28,7 @@ class UserProfileViewSet(mixins.ListModelMixin,
     queryset = User.objects.filter()
 
     perms_map = {
-        'GET': ['{}.user_list'],
+        'GET': [],
         'POST': ['{}.user_add'],
         'PUT': ['{}.user_edit'],
         'PATCH': ['{}.user_edit'],
@@ -36,11 +36,10 @@ class UserProfileViewSet(mixins.ListModelMixin,
     }
 
     def list(self, request, *args, **kwargs):
-        self.queryset = User.objects.filter(is_superuser=0)
+        self.queryset = User.objects.filter(is_superuser=0).exclude(username=request.user.username)
         return super(UserProfileViewSet, self).list(request, *args, **kwargs)
 
-    @action(detail=False, methods=['get'], name='user-info',
-            url_path='user-info', **{'perms_map':{'GET': []}})
+    @action(detail=False, methods=['get'], name='user-info', url_path='user-info')
     def userInfo(self, request):
         """
         获取当前登陆的用户信息

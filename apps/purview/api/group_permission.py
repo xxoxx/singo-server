@@ -11,6 +11,7 @@ from rest_framework.decorators import action
 
 from ..serializers import PermissionGroupSerializers
 from common.utils import logger
+from common.permissions import DevopsPermission
 
 class GroupPermissionsViewset(viewsets.GenericViewSet):
     '''
@@ -19,9 +20,11 @@ class GroupPermissionsViewset(viewsets.GenericViewSet):
         默认返回中文格式的权限点列表:[app名字.权限点名称,...]
         指定escape=false返回:[appName.codename,....]
 
-
     put:
         设置组权限
+
+    delete:
+        删除指定APP,model下的所有权限点
     '''
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = PermissionGroupSerializers
@@ -29,23 +32,18 @@ class GroupPermissionsViewset(viewsets.GenericViewSet):
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
 
+    perms_map = {
+        'GET': [],
+        'PUT': ['{}.group_permission_permission_set'],
+        'PATCH': ['{}.group_permission_permission_set'],
+        'DELETE': ['{}.group_permission_permission_set']
+    }
+
     def retrieve(self, request, *args, **kwargs):
         '''
         获取组权限点列表
         '''
         group = self.get_object()
-
-        # try:
-        #     escape = {'false':False, 'true':True}[request.GET.get('escape', 'true')]
-        # except:
-        #     escape = True
-        #
-        # if escape:
-        #     permissions = ['{}.{}'.format(apps.get_app_config(p.content_type.app_label).verbose_name, p.name)
-        #                     for p in group.permissions.all()]
-        # else:
-        #     permissions = ['{}.{}'.format(p.content_type.app_label, p.codename)
-        #                    for p in group.permissions.all()]
 
         permissions = [{'node': '{}.{}'.format(p.content_type.app_label, p.codename),
                         'nodeName': '{}.{}'.format(apps.get_app_config(p.content_type.app_label).verbose_name, p.name)}
@@ -119,21 +117,25 @@ class GroupPermissionsViewset(viewsets.GenericViewSet):
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': '删除权限点成功'}, status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['delete'], name='group-permissions-all',
-            url_path='all', permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['delete'], name='group-permissions-clear',
+            url_path='clear', **{'perms_map':{'DELETE': ['{}.group_permission_permission_set']}})
     def permissions_all(self, request, pk):
         group = self.get_object()
         group.permissions.clear()
         return Response({'detail': '清除权限完成'}, status=status.HTTP_204_NO_CONTENT)
 
 
-
 class GroupPermissionsViewsetV2(viewsets.GenericViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, DevopsPermission)
     serializer_class = PermissionGroupSerializers
     queryset = Group.objects.all()
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
+
+    perms_map = {
+        'PUT': ['{}.group_permission_permission_set'],
+        'PATCH': ['{}.group_permission_permission_set'],
+    }
 
     def update(self, request, *args, **kwargs):
         '''

@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 
 from ..serializers import PermissionGroupSerializers, UserSerializer
 from common.pagination import CustomPagination
+from common.permissions import DevopsPermission
 
 User = get_user_model()
 
@@ -31,9 +32,16 @@ class GroupViewSet(viewsets.ModelViewSet):
     lookup_value_regex = '[0-9]+'
     serializer_class = PermissionGroupSerializers
     queryset = Group.objects.all()
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.IsAuthenticated, DevopsPermission)
     pagination_class = CustomPagination
     search_fields = ('name',)
+    perms_map = {
+        'GET': [],
+        'POST': ['{}.group_permission_add'],
+        'PUT': ['{}.group_permission_edit'],
+        'PATCH': ['{}.group_permission_edit'],
+        'DELETE': ['{}.group_permission_delete']
+    }
 
 class GroupUsersViewset(viewsets.GenericViewSet):
     """
@@ -48,10 +56,17 @@ class GroupUsersViewset(viewsets.GenericViewSet):
     destroy:
     清除权限组成员
     """
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, DevopsPermission)
     serializer_class = UserSerializer
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
+
+    perms_map = {
+        'GET': [],
+        'PUT': ['{}.group_permission_user_set'],
+        'PATCH': ['{}.group_permission_user_set'],
+        'DELETE': ['{}.group_permission_user_clear']
+    }
 
     def get_object(self):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
@@ -115,10 +130,16 @@ class UserGroupsViewset(viewsets.GenericViewSet):
     destroy:
     清空成员的权限组
     '''
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, DevopsPermission)
     serializer_class = PermissionGroupSerializers
     lookup_field = 'pk'
     lookup_value_regex = '[0-9a-z\-]{32,36}'
+    perms_map = {
+        'GET': [],
+        'PUT': ['{}.group_permission_set'],
+        'PATCH': ['{}.group_permission_set'],
+        'DELETE': ['{}.group_permission_set']
+    }
 
     def get_object(self):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field

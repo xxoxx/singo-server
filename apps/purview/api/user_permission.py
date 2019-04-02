@@ -13,6 +13,9 @@ from django.contrib.auth import get_user_model
 from common.utils import Bcolor
 from ..serializers import UserSerializer
 from common.utils import logger
+from common.permissions import DevopsPermission, IsSuperuser
+from .permission_query import get_apps, get_models, get_permission_nodes
+from common.permissions import DevopsPermission
 
 User = get_user_model()
 
@@ -27,15 +30,26 @@ class UserPermissionsViewSet(viewsets.GenericViewSet):
         put:
             设置用户权限(必须指定APP,model,permission node)
     '''
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, DevopsPermission)
     serializer_class = UserSerializer
     queryset = User.objects.all()
     lookup_field = 'pk'
     lookup_value_regex = '[a-z0-9\-]{32,36}'
 
+    perms_map = {
+        'GET': [],
+        'PUT': ['{}.{}.user_permission_set'],
+        'PATCH': ['{}.{}.user_permission_set'],
+        'DELETE': ['{}.user_permission_set']
+    }
+
     def retrieve(self, request, *args, **kwargs):
         '''
         获取用户所有APP权限点(不包括所在组)
+        [
+            "purview.group_permission",
+            ......
+        ]
         '''
         user = self.get_object()
         permissions_all = ['{}.{}'.format(p.content_type.app_label, p.codename)
@@ -55,6 +69,10 @@ class UserPermissionsViewSet(viewsets.GenericViewSet):
                 reset默认值为True,当reset为True时重置组权限,当reset为True时添加用户权限
         '''
         user = self.get_object()
+
+        if user == request.user:
+            return Response({'detail': '权限拒绝'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             app_name = request.data.get('appName')
             codenames = request.data.get('codenames')
@@ -108,8 +126,10 @@ class UserPermissionsViewSet(viewsets.GenericViewSet):
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': '删除权限点成功'}, status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['get', 'delete'], name='user-permissions-all',
-            url_path='all', permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['get', 'delete'],
+            name='user-permissions-all', url_path='all',
+            **{'perms_map': {'GET':[], 'DELETE': ['{}.user_permission_set']}}
+            )
     def permissions_all(self, request, pk):
         '''
         get:
@@ -128,17 +148,40 @@ class UserPermissionsViewSet(viewsets.GenericViewSet):
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=True, methods=['get'], name='user-permissions-tree',
+            url_path='permission-tree', **{'perms_map': {'GET':[]}})
+    def permissions_tree(self, request, pk):
+        '''
+        获取用户权限树
+        :param request:
+        :return:
+        '''
+        try:
+            user = request.user
+            apps = get_apps()
+            for app in apps:
+                app['models'] = get_models(app.get('name'))
+                for model in app['models']:
+                    model['permissions'] = get_permission_nodes(app.get('name'), model.get('name'), user=user, with_groups=True)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(apps)
 
 
 class UserPermissionsViewSetV2(viewsets.GenericViewSet):
     '''
     更新用户权限点
     '''
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, DevopsPermission)
     serializer_class = UserSerializer
     queryset = User.objects.all()
     lookup_field = 'pk'
     lookup_value_regex = '[a-z0-9\-]{32,36}'
+
+    perms_map = {
+        'PUT':['{}.user_permission_set'],
+        'PATCH':['{}.user_permission_set'],
+    }
 
     def update(self, request, *args, **kwargs):
         '''
@@ -152,6 +195,11 @@ class UserPermissionsViewSetV2(viewsets.GenericViewSet):
         '''
         permissions = []
         user = self.get_object()
+
+        # 不能自己给自己设置权限
+        if user == request.user:
+            return Response({'detail':'权限拒绝'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             for permission_node in request.data:
                 permission_node = permission_node.split('.', 1)

@@ -58,7 +58,7 @@ api_patterns = [
     url(r'^salt/v1/', include('saltManagement.urls', namespace='api-salt', app_name='saltManagement')),
     url(r'^workorder/v1/', include('workOrder.urls', namespace='api-work-order', app_name='workOrder')),
     url(r'^permissions/v1/', include('purview.urls', namespace='api-permissions', app_name='purview')),
-    url(r'^permissions/v2/', include('purview.urls_v2', namespace='api-permissions-v2', app_name='purview-v2')),
+    url(r'^permissions/v2/', include('purview.urls_v2', namespace='api-permissions-v2', app_name='purview')),
 ]
 
 urlpatterns = [

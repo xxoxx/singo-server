@@ -10,6 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from ..serializers import AuthPermissonSerializers, ContentTypeSerializers
 from common.utils import logger
+from common.permissions import DevopsPermission
 
 def model_import(name):
     components = name.split('.')
@@ -18,69 +19,91 @@ def model_import(name):
         mod = getattr(mod, comp)
     return mod
 
+def get_apps():
+    data = []
+    for app in apps.get_app_configs():
+        try:
+            if app.is_purview:
+                data.append(
+                    {
+                        'name': app.name,
+                        'label': app.verbose_name
+                    }
+                )
+        except:
+            pass
+    return data
+
+def get_models(app_label):
+    data = []
+    app = apps.get_app_config(app_label)
+    for name, model in app.models.items():
+        try:
+            if model._meta.is_purview:
+                content_type = ContentType.objects.get_for_model(model)
+                data.append(
+                    {
+                        'name': name,
+                        'label': model._meta.verbose_name,
+                        'content_type':
+                            {
+                                'id': content_type.id,
+                                'model': content_type.model
+                            }
+                    }
+                )
+        except:
+            pass
+    return data
+
+def get_permission_nodes(app_label, model_name, user=None, with_groups=False):
+    data = []
+    app = apps.get_app_config(app_label)
+    model = app.get_model(model_name)
+    if model._meta.is_purview:
+        # queryset = get_perms_for_model(model)
+        # content_type = ContentType.objects.get_for_model(model)
+        # queryset = Permission.objects.filter(content_type=content_type)
+        parms = {
+            'content_type__app_label': app_label,
+            'content_type__model': model_name
+        }
+
+        if user and user.is_superuser:
+            pass
+        elif user and with_groups:
+            permissions = user.get_all_permissions()
+            codename_list = [p.split('.')[1] for p in permissions]
+            parms['codename__in'] = codename_list
+        elif user:
+            queryset = Permission.objects.filter(
+                content_type__app_label=app_label,
+                content_type__model=model_name)
+            parms['user'] = user
+        else:
+            pass
+
+        # permissions = user.get_all_permissions()
+        # codename_list = [p.split('.')[1] for p in permissions]
+        # queryset = Permission.objects.filter(codename__in=codename_list)
+        # queryset = queryset.filter(
+        #     content_type__app_label=app_label,
+        #     content_type__model=model_name)
+
+        queryset = Permission.objects.filter(**parms)
+        serializer = AuthPermissonSerializers(queryset, many=True)
+        data = serializer.data
+    return data
+
 
 class PermissonQueryViewSet(viewsets.GenericViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
     serializer_class = AuthPermissonSerializers
     queryset = Permission.objects.all()
     lookup_field = 'pk'
     lookup_value_regex = '[a-z0-9\-]+'
     ordering_fields = ('id',)
     search_fields = ('name', 'codename')
-
-
-    def __get_apps(self):
-        data = []
-        for app in apps.get_app_configs():
-            try:
-                if app.is_purview:
-                    data.append(
-                        {
-                            'name': app.name,
-                            'label': app.verbose_name
-                        }
-                    )
-            except:
-                pass
-        return data
-
-    def __get_models(self, app_label):
-        data = []
-        app = apps.get_app_config(app_label)
-        for name, model in app.models.items():
-            try:
-                if model._meta.is_purview:
-                    content_type = ContentType.objects.get_for_model(model)
-                    data.append(
-                        {
-                            'name': name,
-                            'label': model._meta.verbose_name,
-                            'content_type':
-                                {
-                                    'id': content_type.id,
-                                    'model': content_type.model
-                                }
-                        }
-                    )
-            except:
-                pass
-        return data
-
-    def __get_permission_nodes(self, app_label, model_name):
-        data = []
-        app = apps.get_app_config(app_label)
-        model = app.get_model(model_name)
-        if model._meta.is_purview:
-            # queryset = get_perms_for_model(model)
-            # content_type = ContentType.objects.get_for_model(model)
-            # queryset = Permission.objects.filter(content_type=content_type)
-            queryset = Permission.objects.filter(
-                content_type__app_label=app_label,
-                content_type__model=model_name)
-
-            serializer = AuthPermissonSerializers(queryset, many=True)
-            data = serializer.data
-        return data
 
     @action(detail=False, methods=['get'],
             name='permission-apps', url_path='apps')
@@ -90,7 +113,7 @@ class PermissonQueryViewSet(viewsets.GenericViewSet):
         :param request:
         :return {"app":val, "label":val}:
         '''
-        data = self.__get_apps()
+        data = get_apps()
         return Response(data)
 
     @action(detail=False, methods=['get'],
@@ -101,7 +124,7 @@ class PermissonQueryViewSet(viewsets.GenericViewSet):
         :return: {"model":val, "label":val}
         '''
         try:
-            data = self.__get_models(app)
+            data = get_models(app)
         except Exception as e:
             return Response({'detail': '找不到应用名称'}, status=status.HTTP_404_NOT_FOUND)
         return Response(data)
@@ -121,7 +144,7 @@ class PermissonQueryViewSet(viewsets.GenericViewSet):
         },
         '''
         try:
-            data = self.__get_permission_nodes(app, model)
+            data = get_permission_nodes(app, model)
         except Exception as e:
             logger.error(e)
             return Response({'detail': str(e)}, status=status.HTTP_404_NOT_FOUND)
@@ -136,16 +159,14 @@ class PermissonQueryViewSet(viewsets.GenericViewSet):
         :return:
         '''
         try:
-            apps = self.__get_apps()
+            apps = get_apps()
             for app in apps:
-                app['models'] = self.__get_models(app.get('name'))
+                app['models'] = get_models(app.get('name'))
                 for model in app['models']:
-                    model['permissions'] = self.__get_permission_nodes(app.get('name'), model.get('name'))
+                    model['permissions'] = get_permission_nodes(app.get('name'), model.get('name'))
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
         return Response(apps)
-
 
     @action(detail=False, methods=['get'], name='permission-list', url_path='permission-list')
     def permissions_list(self, request):
@@ -157,9 +178,9 @@ class PermissonQueryViewSet(viewsets.GenericViewSet):
         # return Response(permissions)
         permissions = []
         try:
-            apps = self.__get_apps()
+            apps = get_apps()
             for app in apps:
-                app['models'] = self.__get_models(app.get('name'))
+                app['models'] = get_models(app.get('name'))
                 for model in app['models']:
                     queryset = Permission.objects.filter(
                         content_type__app_label=app.get('name'),
@@ -188,9 +209,17 @@ class AuthPermissonViewSet(mixins.CreateModelMixin,
         删除权限点
 
     '''
+
     serializer_class = AuthPermissonSerializers
     queryset = Permission.objects.all()
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, DevopsPermission)
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
+    perms_map = {
+        'GET': [],
+        'POST': ['{}.permission_add'],
+        'PUT': ['{}.permission_edit'],
+        'PATCH': ['{}.permission_edit'],
+        'DELETE': ['{}.permission_delete']
+    }
 

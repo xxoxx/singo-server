@@ -70,6 +70,5 @@ class LoginLog(models.Model):
     class Meta:
         verbose_name = '登录日志'
         verbose_name_plural = verbose_name
-        is_purview = True
 
 
