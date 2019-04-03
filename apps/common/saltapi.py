@@ -1,8 +1,8 @@
 import logging
 
 # from saltManagement.saltapi import SaltAPI
-from devops.settings import SALTAPI
-
+# from devops.settings import SALTAPI
+from django.conf import settings
 import requests
 import urllib3
 import time
@@ -295,9 +295,9 @@ class SaltAPI(object):
 
 
 try:
-    url = SALTAPI.get('URL')
-    username = SALTAPI.get('USERNAME')
-    password = SALTAPI.get('PASSWORD')
+    url = settings.SALTAPI.get('URL')
+    username = settings.SALTAPI.get('USERNAME')
+    password = settings.SALTAPI.get('PASSWORD')
     saltapi = SaltAPI(url=url, username=username, password=password)
     # saltapi.run_script('devops', 'scripts/python/test.py')
     # print(saltapi.post(**{'client': 'wheel', 'fun': 'key.list_all'}))
