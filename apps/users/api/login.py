@@ -13,7 +13,8 @@ from django.contrib.auth.hashers import check_password, make_password
 from ..tasks import write_login_log
 from ..tasks import set_last_login
 from common.utils import Bcolor
-from common.apis.oaapi import oaapi
+# from common.apis.oaapi import oaapi
+from common.apis import oaapi
 from common.utils import logger
 
 

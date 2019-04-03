@@ -22,5 +22,16 @@ except Exception as e:
     print('======')
     print(e)
 
+import time
+while True:
+    conn.search(search_base='dc=ztyc,dc=net',
+                search_filter='(objectClass=top)',
+                search_scope=LEVEL
+                )
+    print(conn.entries)
+    print(len(conn.entries))
+    print((time.time()))
+    time.sleep(600)
+
 
 

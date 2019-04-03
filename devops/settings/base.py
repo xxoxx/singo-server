@@ -1,3 +1,6 @@
+__author__ = 'singo'
+__datetime__ = '2019/4/3 1:59 PM '
+
 """
 Django settings for devops project.
 
@@ -14,16 +17,25 @@ import os
 import sys
 import datetime
 import django.db.models.options as options
-from configs import *
+from pathlib import Path
 
 # 自定义表权限位参数
 options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('is_purview',)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+BASE_DIR =Path(__file__).parents[2]
+
 # sys.path.insert(0, BASE_DIR)
 sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 
+ENV = os.getenv('devops_env', 'dev')
+
+if ENV is 'dev' or 'test':
+    DEBUG = True
+else:
+    DEBUG = False
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
