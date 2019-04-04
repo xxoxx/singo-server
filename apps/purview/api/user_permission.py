@@ -70,9 +70,6 @@ class UserPermissionsViewSet(viewsets.GenericViewSet):
         '''
         user = self.get_object()
 
-        if user == request.user:
-            return Response({'detail': '权限拒绝'}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
             app_name = request.data.get('appName')
             codenames = request.data.get('codenames')
@@ -81,6 +78,13 @@ class UserPermissionsViewSet(viewsets.GenericViewSet):
             app = apps.get_app_config(app_name)
             model = app.get_model(request.data.get('modelName'))
             content_type = ContentType.objects.get_for_model(model)
+
+            # 设置权限范围不能大于自己所拥有的权限
+            # 设置权限对象不能是自己
+            if (not user.is_superuser and not \
+                    set(codenames).issubset(request.user.get_all_permissions())) \
+                    or user == request.user:
+                return Response({'detail': '权限拒绝'}, status=status.HTTP_400_BAD_REQUEST)
 
             # 需要设置的权限点
             permissions_set = Permission.objects.filter(content_type=content_type, codename__in=codenames)
@@ -128,8 +132,7 @@ class UserPermissionsViewSet(viewsets.GenericViewSet):
 
     @action(detail=True, methods=['get', 'delete'],
             name='user-permissions-all', url_path='all',
-            **{'perms_map': {'GET':[], 'DELETE': ['{}.user_permission_set']}}
-            )
+            **{'perms_map': {'GET':[], 'DELETE': ['{}.user_permission_set']}})
     def permissions_all(self, request, pk):
         '''
         get:
@@ -148,11 +151,11 @@ class UserPermissionsViewSet(viewsets.GenericViewSet):
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['get'], name='user-permissions-tree',
+    @action(detail=False, methods=['get'], name='user-permissions-tree',
             url_path='permission-tree', **{'perms_map': {'GET':[]}})
-    def permissions_tree(self, request, pk):
+    def permissions_tree(self, request):
         '''
-        获取用户权限树
+        获取当前用户权限树
         :param request:
         :return:
         '''
@@ -196,9 +199,12 @@ class UserPermissionsViewSetV2(viewsets.GenericViewSet):
         permissions = []
         user = self.get_object()
 
-        # 不能自己给自己设置权限
-        if user == request.user:
-            return Response({'detail':'权限拒绝'}, status=status.HTTP_400_BAD_REQUEST)
+        # 设置权限范围不能大于自己所拥有的权限
+        # 设置权限对象不能是自己
+        if (not user.is_superuser and not \
+            set(request.data).issubset(request.user.get_all_permissions())) \
+            or user == request.user:
+            return Response({'detail': '权限拒绝'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             for permission_node in request.data:

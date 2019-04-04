@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'saltManagement.apps.SaltManagementConfig',
     'workOrder.apps.WorkorderConfig',
     'purview.apps.PurviewConfig',
+    'ldap.apps.LdapConfig',
 ]
 
 # AUTHENTICATION_BACKENDS = (

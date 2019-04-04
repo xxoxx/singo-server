@@ -1,8 +1,8 @@
 from django.conf.urls import url, include
 from rest_framework.routers import DefaultRouter
 
-from .api.user_permission import UserPermissionsViewSetV2
-from .api.group_permission import GroupPermissionsViewsetV2
+from purview.api.user_permission import UserPermissionsViewSetV2
+from purview.api.group_permission import GroupPermissionsViewsetV2
 
 from rest_framework.routers import DefaultRouter
 

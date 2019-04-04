@@ -1,3 +1,4 @@
 __author__ = 'singo'
 __datetime__ = '2019/2/27 4:53 PM '
-from .oaapi import oaapi
+from .oa_api import oaapi
+from .ldap_api import ldap_conn

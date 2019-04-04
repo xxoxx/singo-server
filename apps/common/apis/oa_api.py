@@ -4,7 +4,7 @@ __datetime__ = '2019/2/27 4:52 PM '
 import requests
 import json
 
-from .baseApi import BaseAPI
+from .base_api import BaseAPI
 from common.utils import logger, Bcolor
 from django.conf import settings
 

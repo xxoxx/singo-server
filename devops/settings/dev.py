@@ -110,3 +110,15 @@ OAAPI = {
     'USERNAME': 'rest',
     'PASSWORD': 'Lemon1912'
 }
+
+# LDAP API
+
+LADPAPI = {
+    'LDAP_HOST': '172.16.102.18:389',
+    'LDAP_USE_SSL': False,
+    'LDAP_SEARCH_FILTER': 'uid={uid}',
+    'LDAP_BASE_DC': 'dc=ztyc,dc=net',
+    'LDAP_BASE_DN': 'ou=people,dc=ztyc,dc=net',
+    'LDAP_BIND_USER_DN': 'cn=root,dc=ztyc,dc=net',
+    'LDAP_BIND_USER_PASSWORD': 'ztyc1234'
+}

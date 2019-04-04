@@ -6,6 +6,6 @@ from .base import *
 if ENV == 'dev':
     from .dev import *
 elif ENV == 'test':
-    pass
+    from .test import *
 else:
     pass

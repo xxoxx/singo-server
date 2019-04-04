@@ -1,10 +1,10 @@
 from django.conf.urls import url, include
 from rest_framework.routers import DefaultRouter
 
-from .api.user_permission import UserPermissionsViewSet
-from .api.group_permission import GroupPermissionsViewset
-from .api.permission_query import PermissonQueryViewSet, AuthPermissonViewSet
-from .api.group import GroupViewSet, GroupUsersViewset, UserGroupsViewset
+from purview.api.user_permission import UserPermissionsViewSet
+from purview.api.group_permission import GroupPermissionsViewset
+from purview.api.permission_query import PermissonQueryViewSet, AuthPermissonViewSet
+from purview.api.group import GroupViewSet, GroupUsersViewset, UserGroupsViewset
 
 from rest_framework.routers import DefaultRouter
 

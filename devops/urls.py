@@ -57,8 +57,10 @@ api_patterns = [
     url(r'^users/v1/', include('users.urls', namespace='api-users', app_name='users')),
     url(r'^salt/v1/', include('saltManagement.urls', namespace='api-salt', app_name='saltManagement')),
     url(r'^workorder/v1/', include('workOrder.urls', namespace='api-work-order', app_name='workOrder')),
-    url(r'^permissions/v1/', include('purview.urls', namespace='api-permissions', app_name='purview')),
-    url(r'^permissions/v2/', include('purview.urls_v2', namespace='api-permissions-v2', app_name='purview')),
+    url(r'^permissions/v1/', include('purview.urls.urls_v1', namespace='api-permissions', app_name='purview')),
+    url(r'^permissions/v2/', include('purview.urls.urls_v2', namespace='api-permissions-v2', app_name='purview')),
+    url(r'^ldap/v1/', include('ldap.urls', namespace='api-ldap', app_name='ldap')),
+
 ]
 
 urlpatterns = [
