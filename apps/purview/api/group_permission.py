@@ -11,7 +11,7 @@ from rest_framework.decorators import action
 
 from ..serializers import PermissionGroupSerializers
 from common.utils import logger
-from common.permissions import DevopsPermission
+from common.permissions import DevopsPermission, IsSuperuser
 
 class GroupPermissionsViewset(viewsets.GenericViewSet):
     '''
@@ -26,7 +26,7 @@ class GroupPermissionsViewset(viewsets.GenericViewSet):
     delete:
         删除指定APP,model下的所有权限点
     '''
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, DevopsPermission)
     serializer_class = PermissionGroupSerializers
     queryset = Group.objects.all()
     lookup_field = 'pk'
@@ -126,16 +126,17 @@ class GroupPermissionsViewset(viewsets.GenericViewSet):
 
 
 class GroupPermissionsViewsetV2(viewsets.GenericViewSet):
-    permission_classes = (permissions.IsAuthenticated, DevopsPermission)
+    permission_classes = (permissions.IsAuthenticated, IsSuperuser)
     serializer_class = PermissionGroupSerializers
     queryset = Group.objects.all()
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
 
-    perms_map = {
-        'PUT': ['{}.group_permission_permission_set'],
-        'PATCH': ['{}.group_permission_permission_set'],
-    }
+    # 只允许admin账户修改权限组权限
+    # perms_map = {
+    #     'PUT': ['{}.group_permission_permission_set'],
+    #     'PATCH': ['{}.group_permission_permission_set'],
+    # }
 
     def update(self, request, *args, **kwargs):
         '''

@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from ..serializers import AuthPermissonSerializers, ContentTypeSerializers
 from common.utils import logger
-from common.permissions import DevopsPermission
+from common.permissions import IsSuperuser
 
 def model_import(name):
     components = name.split('.')
@@ -212,14 +212,16 @@ class AuthPermissonViewSet(mixins.CreateModelMixin,
 
     serializer_class = AuthPermissonSerializers
     queryset = Permission.objects.all()
-    permission_classes = (permissions.IsAuthenticated, DevopsPermission)
+    permission_classes = (permissions.IsAuthenticated, IsSuperuser)
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
-    perms_map = {
-        'GET': [],
-        'POST': ['{}.permission_add'],
-        'PUT': ['{}.permission_edit'],
-        'PATCH': ['{}.permission_edit'],
-        'DELETE': ['{}.permission_delete']
-    }
+
+    #权限点只允许amdin账户修改
+    # perms_map = {
+    #     'GET': [],
+    #     'POST': ['{}.permission_add'],
+    #     'PUT': ['{}.permission_edit'],
+    #     'PATCH': ['{}.permission_edit'],
+    #     'DELETE': ['{}.permission_delete']
+    # }
 
