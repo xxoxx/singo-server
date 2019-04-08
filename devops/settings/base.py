@@ -32,10 +32,15 @@ sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 
 ENV = os.getenv('devops_env', 'dev')
 
-if ENV is 'dev' or 'test':
+if ENV == 'dev':
     DEBUG = True
+    SECRET_KEY = '%u6kxw-a4k-*87bd1)uu^9s-h141zq)o!a#kjval5s&^#$#q)#'
+elif ENV == 'test':
+    DEBUG = True
+    SECRET_KEY = 'cojnkm-8ukb)n(2btiud$rc+x-zl!to$$#_2nn&4p%89fle-lz'
 else:
     DEBUG = False
+    SECRET_KEY = '=9p_gjl_d3*0-do^2%utnxqqp)i*yg5ma3z4&_el8m0v5!@x7r'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
