@@ -95,13 +95,10 @@ class OAAPI(BaseAPI):
         return self.__oa_request(prefix='orgMember', type='get', **data)
 
 
-if not settings.DEBUG:
-    oaapi = None
-else:
-    oaapi = OAAPI(url=settings.OAAPI.get('URL'),
-                  username=settings.OAAPI.get('USERNAME'),
-                  password=settings.OAAPI.get('PASSWORD'),
-                  timeout=30)
+oaapi = OAAPI(url=settings.OAAPI.get('URL'),
+              username=settings.OAAPI.get('USERNAME'),
+              password=settings.OAAPI.get('PASSWORD'),
+              timeout=30)
     # print(oaapi.user_auth(username='000214', password='nj532680'))
     # print(oaapi.get_userinfo(username='000214'))
 
