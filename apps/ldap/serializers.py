@@ -3,6 +3,13 @@ __datetime__ = '2019/4/3 4:25 PM '
 
 from rest_framework import serializers
 
-class TestSerializer(serializers.Serializer):
-    id = serializers.UUIDField(read_only=True)
-    name = serializers.CharField(required=False, read_only=True)
+class LdapSerializer(serializers.Serializer):
+    sn = serializers.CharField()
+    givenName = serializers.CharField()
+    displayName = serializers.CharField()
+    uid = serializers.CharField()
+    userPassword = serializers.CharField()
+    mobile = serializers.CharField(max_length=11, min_length=11)
+    mail = serializers.EmailField()
+    postalAddress = serializers.CharField()
+
