@@ -14,7 +14,6 @@ from common.utils import logger
 
 
 class LdapViewset(mixins.CreateModelMixin,
-                  mixins.UpdateModelMixin,
                   mixins.RetrieveModelMixin,
                   viewsets.GenericViewSet):
     '''
@@ -29,7 +28,7 @@ class LdapViewset(mixins.CreateModelMixin,
     post:
         添加成员
 
-    put/patch:
+    put:
         更新成员信息
 
     delete:
@@ -153,6 +152,7 @@ class LdapViewset(mixins.CreateModelMixin,
         if ldap_conn.result['result'] != 0:
             logger.critical(str(ldap_conn.result))
             raise LdapError
+        return Response(data=serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         uid = kwargs.get('pk')
