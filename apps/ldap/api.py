@@ -42,10 +42,10 @@ class LdapViewset(mixins.CreateModelMixin,
 
     perms_map = {
         'GET': ['{}.ldap_list'],
-        'POST': ['{}.add_member'],
-        'PUT': ['{}.edit_member'],
-        'PATCH': ['{}.edit_member'],
-        'DELETE': ['{}.delete_memeber']
+        'POST': ['{}.member_add'],
+        'PUT': ['{}.member_edit'],
+        'PATCH': ['{}.member_edit'],
+        'DELETE': ['{}.member_delete']
     }
 
     def __entries_list(self, entries, level=1):
