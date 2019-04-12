@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import authentication, permissions
 import logging
 
-from common import saltapi
+from common.apis import saltapi
 
 logger = logging.getLogger('devops')
 

@@ -1,59 +1,80 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import authentication, permissions
-import logging
+from rest_framework.validators import ValidationError
 
-from common import saltapi
-from common.utils import Bcolor
-
-logger = logging.getLogger('devops')
+from common.apis import saltapi
+from common.permissions import IsSuperuser
+from common.utils import logger
+from resources.createSources.server import saveServer
 
 class SaltKeyAPI(APIView):
-    permission_classes = (permissions.IsAdminUser,)
+    '''
+    salt key管理
+
+    get:
+        获取key列表
+
+    post:
+        接受一个key
+
+    patch:
+        拒绝一个key
+
+    delete:
+        删除一个key
+    '''
+    permission_classes = (IsSuperuser,)
 
     def get(self, request, format=None):
         data = saltapi.key_list()
         return Response(data)
 
-    def __key_operations(self, key, request):
-        f = {
-            'accept': saltapi.accept_key,
-            'delete': saltapi.delete_key,
-            'reject': saltapi.reject_key
-        }.get(key, None)
+    def post(self, request, format=None ):
+        salt_id = request.data.get('keyID')
+        response = saltapi.accept_key(salt_id)
 
-        if f:
+        if response.get('code') == 200 and request.data.get('addAssets'):
+            data = saltapi.get_grains_items(salt_id)
             try:
-                key_id = request.data['keyID']
-                data = f(key_id=key_id)
-            except KeyError:
-                logger.warning('找不到keyID')
-                data = {'code': -1, 'detail': '参数错误'}
-        else:
-            data = {'code': -1, 'detail': '未找到执行函数'}
-        return data
-
-    def put(self, request, *args, **kwargs):
-        data = self.__key_operations('accept', request)
-        return Response(data)
+                if data['code'] == 200:
+                    data['comment'] = '来自salt添加'
+                    saveServer(data)
+            except ValidationError as e:
+                logger.error(e)
+                response['detail'] = '接受KEY成功,资产中已存在此saltID的资产'
+            except Exception as e:
+                logger.error(e)
+                response['detail'] = '接受KEY成功,导入到资产失败'
+        # response = {'code': 200, 'status': True, 'detail': '接受KEY成功,资产中已存在此saltID的资产'}
+        return Response(response)
 
     def patch(self, request, *args, **kwargs):
-        data = self.__key_operations('reject', request)
+        data = saltapi.reject_key(request.data.get('keyID'))
         return Response(data)
 
     def delete(self, request, *args, **kwargs):
-        data = self.__key_operations('delete', request)
+        data = saltapi.delete_key(request.data.get('keyID'))
         return Response(data)
 
 class Test(APIView):
     def get(self, request, format=None):
-    #     data = saltapi.get_grains_items('minion-1')
-    #
-    #     if data['code'] == 200:
-    #         from resources.createSources.server import saveServer
-    #         data = saveServer(data)
+        data = saltapi.get_grains_items('devops')
 
-        # print(data)
+        print('===========================')
+        data['comment'] = '来自salt添加'
+        if data['code'] == 200:
+            try:
+                data = saveServer(data)
+            except ValidationError as e:
+                print(e)
+                print('赵永强你麻痹')
+            except Exception as e:
+
+                print(e)
+                print('我抓住你了')
+
+        print(data)
         # from resources.models import Server
         # from resources.serializers import SaltServerSerializer
         # server = Server.objects.get(pk='9d20bd5985b447d083bb6d9fac6cbba3')
@@ -68,5 +89,5 @@ class Test(APIView):
         # s = Server.objects.create(**{'hostname': 'test14','provider_id':2, '_IP':'10.0.1.14',
         #                        'protocol':'ssh', 'comment':'14'})
         # s.nodes.add(*[])
-        saltapi.run_script('*', 'scripts/python/test.py')
+        # saltapi.run_script('*', 'scripts/python/test.py')
         return Response({'OK':'ok'})
