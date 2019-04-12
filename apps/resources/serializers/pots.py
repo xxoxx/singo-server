@@ -9,4 +9,4 @@ class PotsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pots
         fields = '__all__'
-        read_only_fields = ('id', 'resources_name')
+        read_only_fields = ('id',)

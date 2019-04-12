@@ -1,4 +1,3 @@
-import logging
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action
@@ -6,23 +5,35 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 from django.db.transaction import atomic
-from django.db.models import Q
 
 from resources.serializers.server import ServerSerializer, SaltServerSerializer
 from resources.serializers.pots import PotsSerializer
 from resources.serializers.node import NodeSerializer
 from ..models.server import Server
 from ..models.node import Node
-from ..models.common import Pots
 from common.pagination import CustomPagination
 from ..filters import ServerFilter
-
-
-
-logger = logging.getLogger('devops')
+from common.utils import logger
 
 class ServerViewSet(viewsets.ModelViewSet):
-    # queryset = Server.objects.all()
+    '''
+    主机管理
+
+    get:
+        获取主机列表
+
+    post:
+        手动添加主机
+
+    put/patch:
+        更新主机信息
+
+    delete:
+        删除主机
+
+    get(detail):
+        获取主机详情
+    '''
     serializer_class = ServerSerializer
     list_serializer_class = SaltServerSerializer
     pagination_class = CustomPagination
@@ -51,20 +62,20 @@ class ServerViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], name='Pots', url_path='pots',
             serializer_class=PotsSerializer)
     def create_pots(self, request, *args, **kwargs):
-        resources_name = Server.__name__.upper()
-        node_name = request.data.get('name').upper()
+        resources_name = Server.__name__.upper()+'S'
+        node_name = request.data.get('node_name').upper()
 
-        if not node_name:
-            logger.error('创建根节点不能指定空值')
-            raise ValidationError({'detail': '创建节根点失败'})
-        elif node_name in [root.name for root in Node.get_root_brothers()]:
+        serializer = self.get_serializer(data = {
+                                    'resources_name': resources_name,
+                                    'node_name': node_name
+                                    })
+        serializer.is_valid(raise_exception=True)
+
+        if node_name in [root.name for root in Node.get_root_brothers()]:
             raise ValidationError({'detail': '已存在根节点{}'.format(node_name)})
         else:
             with atomic():
-                pots, created = Pots.objects.update_or_create(resources_name=resources_name)
-                pots.node_name = node_name
-                pots.save()
-
+                serializer.save()
                 # 设置资产的根节点
                 data = {
                     'name': node_name,
@@ -78,13 +89,10 @@ class ServerViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], name='system-info', url_path='system-info')
     def get_system_info(self, request, pk=None):
-        from common.saltapi import saltapi
+        from common.apis.saltapi import saltapi
         import ast
-        from common.utils import Bcolor
+
         server = self.get_object()
-        #
-        # time.sleep(10)
-        # return Response({'ok':'ok'})
 
         if not server.saltID:
             logger.error('无法获取系统信息,salt未指定')
@@ -97,10 +105,6 @@ class ServerViewSet(viewsets.ModelViewSet):
             response = req[0][server.saltID]['stdout']
             response = ast.literal_eval(response)
             status = 200
-        except KeyError:
-            status = 500
-            response = {'detail': 'KeyError'}
-            logger.error('KeyError')
         except Exception as e:
             response = {'detail': str(e)}
             logger.error(e)

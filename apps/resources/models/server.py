@@ -33,7 +33,7 @@ class Server(models.Model):
     port = models.IntegerField(default=22, verbose_name='远程连接端口')
     _IP = models.GenericIPAddressField(max_length=32, verbose_name='IP', blank=True, null=True)
     # others
-    comment = models.TextField(max_length=256, blank=True, verbose_name='备注')
+    comment = models.TextField(max_length=256, blank=True, null=True, verbose_name='备注')
     created = models.DateTimeField(auto_now_add=True, blank=True, verbose_name='创建时间')
     provider = models.ForeignKey('Provider', blank=True, null=True)
     # node

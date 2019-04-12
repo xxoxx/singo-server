@@ -53,6 +53,8 @@ def saveServer(instance):
     data['ram'] = {'physical': instance['mem_total'], 'swap': instance['swap_total']}
     data['hostname'] = instance['host']
     data['innerIps'], data['publicIps'] = get_inner_public_Ips(instance['ipv4'])
+    data['comment'] = instance.get('comment')
+
     if data['innerIps']:
         data['_IP'] = data['innerIps'][0]
     elif data['publicIps']:
@@ -61,9 +63,7 @@ def saveServer(instance):
         data['_IP'] = None
 
     serializer = SaltServerSerializer(data=data)
-    if serializer.is_valid():
-        serializer.save()
-        return serializer.data
-    else:
-        return serializer.errors
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return  serializer.data
 

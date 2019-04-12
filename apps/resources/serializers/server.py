@@ -15,7 +15,7 @@ class ServerSerializer(serializers.Serializer):
     hostname = serializers.CharField(max_length=128, label='主机名')
     provider = serializers.PrimaryKeyRelatedField(queryset=Provider.objects.all(),
                                                   many=False, label='供应商')
-    provider_name = serializers.SerializerMethodField()
+    # provider_name = serializers.SerializerMethodField()
     saltID = serializers.CharField(max_length=128, label='saltID', allow_null=True)
     # planform = serializers.ChoiceField(choices=['Linux', 'Windows', 'Solaris', 'Unknow'],
     #                                    label='平台')
@@ -26,40 +26,38 @@ class ServerSerializer(serializers.Serializer):
     comment = serializers.CharField(max_length=256, allow_blank=True, label='备注')
     # nodes = NodeSerializer(many=True, read_only=True)
     # nodes = serializers.PrimaryKeyRelatedField(many=True, queryset=Node.objects.all())
-    nodes = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    # nodes = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Server
-        read_only_fields = ['id']
+        read_only_fields = []
 
-    @staticmethod
-    def get_provider_name(server):
-        if server.provider:
-            return server.provider.name
-        return None
+    # @staticmethod
+    # def get_provider_name(server):
+    #     if server.provider:
+    #         return server.provider.name
+    #     return None
 
-    # def to_internal_value(self, data):
-    #     print(data)
-    #     return  super(ServerSerializer, self).to_internal_value(data)
 
     def create(self, validated_data):
-        nodes_list = validated_data.pop('nodes', [])
-        # 如果没指定节点则使用'服务器'节点
-        if not nodes_list:
-            nodes_list = [Node.default_node('服务器')]
+        # nodes_list = validated_data.pop('nodes', [])
+        # # 如果没指定节点则使用默认节点
+        # if not nodes_list:
+        #     nodes_list = [Node.default_node('SERVERS')]
+        nodes_list = [Node.default_node('SERVERS')]
         instance = Server.objects.create(**validated_data)
         instance.nodes.add(*nodes_list)
         return instance
 
 
     def update(self, instance, validated_data):
-        nodes_list = validated_data.pop('nodes', [])
+        # nodes_list = validated_data.pop('nodes', [])
         Server.objects.filter(id=instance.id).update(**validated_data)
         # DEFAULT node
-        if not nodes_list:
-            nodes_list = [Node.default_node('服务器')]
-
-        instance.nodes.set(nodes_list)
+        # if not nodes_list:
+        #     nodes_list = [Node.default_node('SERVERS')]
+        #
+        # instance.nodes.set(nodes_list)
         return instance
 
 
@@ -84,20 +82,20 @@ class SaltServerSerializer(serializers.Serializer):
     innerIps = serializers.ListField(allow_empty=True, allow_null=True, write_only=True)
     publicIps = serializers.ListField(allow_empty=True, allow_null=True, write_only=True)
     ram = serializers.DictField(allow_null=True, write_only=True)
-    comment = serializers.CharField(max_length=256, allow_blank=True, label='备注')
+    comment = serializers.CharField(max_length=256, required=False, allow_blank=True, allow_null=True, label='备注')
     created = serializers.DateTimeField(read_only=True)
     nodes = NodeSerializer(many=True, read_only=True)
 
     class Meta:
         model = Server
         fields = '__all__'
-        # validators = [
-        #     serializers.UniqueTogetherValidator(
-        #         queryset=Server.objects.all(),
-        #         fields=('saltID',),
-        #         message=("saltID 必须唯一")
-        #     )
-        # ]
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=Server.objects.all(),
+                fields=('saltID',),
+                message=("saltID 必须唯一")
+            )
+        ]
     @staticmethod
     def get_provider_name(server):
         try:
@@ -115,9 +113,9 @@ class SaltServerSerializer(serializers.Serializer):
             raise serializers.ValidationError("服务器错误")
 
     def create(self, validated_data):
-        instance = self.getInstance(validated_data.get('saltID', None))
-        if instance:
-            return self.update(instance, validated_data)
+        # instance = self.getInstance(validated_data.get('saltID', None))
+        # if instance:
+        #     return self.update(instance, validated_data)
 
         instance = Server.objects.create(**init_kwargs(Server, **validated_data))
         self.__check_all(instance, validated_data)
@@ -193,10 +191,6 @@ class SaltServerSerializer(serializers.Serializer):
         except Exception as e:
             ret['ram'] = {}
         return ret
-
-    # def to_internal_value(self, data):
-    #     print(data)
-        # return super(ServerSerializer, self).to_internal_value(data)
 
     def cleanip(self, ip_queryset, current_ip_objs):
         not_exists_ip = set(ip_queryset) - set(current_ip_objs)
