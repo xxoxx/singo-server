@@ -122,3 +122,10 @@ LADPAPI = {
     'LDAP_BIND_USER_DN': 'cn=root,dc=ztyc,dc=net',
     'LDAP_BIND_USER_PASSWORD': 'ztyc1234'
 }
+
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': 'redis://:@127.0.0.1:6379/1'
+    }
+}
