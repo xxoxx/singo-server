@@ -168,6 +168,6 @@ class LdapViewset(mixins.CreateModelMixin,
 
 from rest_framework.exceptions import APIException
 class LdapError(APIException):
-    status_code = 403
+    status_code = 400
     default_detail = 'ldap服务器返回错误'
     default_code = 'invalid'
