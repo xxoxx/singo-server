@@ -3,14 +3,15 @@ __datetime__ = '2019/4/3 4:19 PM '
 
 from rest_framework import viewsets, permissions, mixins, status
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from ldap3 import LEVEL, SUBTREE, BASE, MODIFY_REPLACE
 from devops.settings import LADPAPI
 import json
 
 from .serializers import LdapSerializer
-from common.apis import ldap_conn
+from common.apis import ldap_conn, oaapi
 from common.permissions import DevopsPermission
-from common.utils import logger
+from common.utils import logger, id_generator
 
 
 class LdapViewset(mixins.CreateModelMixin,
@@ -71,34 +72,6 @@ class LdapViewset(mixins.CreateModelMixin,
 
         data = self.__entries_list(ldap_conn.entries, level=1)
 
-        # entries = ldap_conn.entries
-        # for entry in ldap_conn.entries:
-        #     entry_dict = json.loads(entry.entry_to_json())
-        #     label = entry_dict.get('dn')
-        #     item = {'label': label, 'children': []}
-        #     ldap_conn.search(search_base=label,
-        #                 search_filter='(objectClass=top)',
-        #                 search_scope=LEVEL
-        #                 )
-        #     # entries = ldap_conn.entries
-        #     for entry in ldap_conn.entries:
-        #         entry_dict = json.loads(entry.entry_to_json())
-        #         label = entry_dict.get('dn')
-        #         sub_item = {'label':label, 'children': []}
-        #
-        #         ldap_conn.search(search_base=label,
-        #                          search_filter='(objectClass=top)',
-        #                          search_scope=LEVEL
-        #                          )
-        #         for entry in ldap_conn.entries:
-        #             entry_dict = json.loads(entry.entry_to_json())
-        #             label = entry_dict.get('dn')
-        #             sub_item['children'].append({'label':label, 'children': []})
-        #
-        #         item['children'].append(sub_item)
-        #
-        #     data.append(item)
-
         return Response(data)
 
     def get_object(self):
@@ -125,7 +98,6 @@ class LdapViewset(mixins.CreateModelMixin,
             data[key] = val[0]
 
         return data
-
 
     def perform_create(self, serializer):
         attributes = dict(serializer.data)
@@ -164,6 +136,58 @@ class LdapViewset(mixins.CreateModelMixin,
             raise LdapError
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['post'], name='activate-ldap',
+            url_path='activate-ldap', **{'perms_map': {'POST':['{}.activate-ldap']}})
+    def activate_ldap(self, request, pk=None):
+        user_info  = oaapi.get_userinfo(request.user.username)
+        password = request.data.get('password', 'hello1234')
+        attributes = {}
+
+        if user_info:
+            attributes['sn'] = user_info.get('pinyinhead')
+            attributes['givenName'] = user_info.get('pinyinhead')
+            attributes['displayName'] = user_info.get('name')
+            attributes['uid'] = user_info.get('pinyin')
+            attributes['userPassword'] = password
+            attributes['mobile'] = user_info.get('telNumber')
+            attributes['mail'] = user_info.get('emailAddress')
+            attributes['postalAddress'] = user_info.get('address')
+            attributes['objectClass'] = ['shadowAccount', 'person', 'organizationalPerson', 'inetOrgPerson']
+
+            user_dn = 'cn={},{}'.format(attributes['uid'], LADPAPI['LDAP_BASE_DN'])
+            ldap_conn.add(user_dn, attributes=attributes)
+
+            if ldap_conn.result['result'] != 0:
+                logger.critical(str(ldap_conn.result))
+                raise LdapError
+
+            # 设置数据库标记
+            properties = json.loads(request.user.properties)
+            properties['activate_ldap'] = False
+            request.user.properties = json.dumps(properties)
+            request.user.save()
+        else:
+            return Response({'detail':'获取OA信息失败'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({'detail': 'LDAP已经激活, 登录用户:{}'.format(attributes['uid'])})
+
+    @action(detail=False, methods=['post'], name='change-password',
+            url_path='change-password', **{'perms_map': {'POST':['{}.change-password']}})
+    def change_password(self, request, pk=None):
+        user_info = oaapi.get_userinfo(request.user.username)
+        password = request.data.get('password', 'hello1234')
+        if user_info:
+            uid = user_info.get('pinyin')
+            user_dn = 'cn={},{}'.format(uid, LADPAPI['LDAP_BASE_DN'])
+            ldap_conn.modify(user_dn, {'userPassword': [(MODIFY_REPLACE, [password])]})
+
+            if ldap_conn.result['result'] != 0:
+                logger.critical(str(ldap_conn.result))
+                raise LdapError
+        else:
+            return Response({'detail':'修改密码失败'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'detail':'修改密码成功'})
 
 
 from rest_framework.exceptions import APIException
