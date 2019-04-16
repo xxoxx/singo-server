@@ -3,6 +3,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import permissions
+import json
 
 from ..serializers import UserUpdateGroupSerializer, ChangeUserPasswordSerializer
 from ..models import User
@@ -49,6 +50,8 @@ class UserProfileViewSet(mixins.ListModelMixin,
         data = serializer.data
         data['avatar'] = uri + data['avatar'] if data['avatar'] else uri +'/media/avatar/plane.jpg'
         data['permissions'] = request.user.get_all_permissions()
+        data['properties'] = json.loads(data['properties'])
+
         return Response(data)
 
 

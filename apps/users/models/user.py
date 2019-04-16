@@ -3,6 +3,7 @@ __author__ = 'Singo'
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group
 import uuid
+import json
 
 
 class User(AbstractUser):
@@ -27,6 +28,10 @@ class User(AbstractUser):
     dingTalk = models.CharField(max_length=30, null=True, blank=True, verbose_name='钉钉号')
     comment = models.TextField(max_length=256, blank=True, verbose_name='备注')
     is_first_login = models.BooleanField(default=True)
+    _properties = json.dumps({
+        'activate_ldap': False
+    })
+    properties = models.TextField(default=_properties, verbose_name='扩展属性')
 
     @property
     def password_raw(self):
