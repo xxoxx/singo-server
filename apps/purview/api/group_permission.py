@@ -36,7 +36,7 @@ class GroupPermissionsViewset(viewsets.GenericViewSet):
         'GET': [],
         'PUT': ['{}.group_permission_permission_set'],
         'PATCH': ['{}.group_permission_permission_set'],
-        'DELETE': ['{}.group_permission_permission_set']
+        'DELETE': ['{}.group_permission_permission_delete']
     }
 
     def retrieve(self, request, *args, **kwargs):
