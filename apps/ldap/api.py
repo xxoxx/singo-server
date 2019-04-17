@@ -138,7 +138,7 @@ class LdapViewset(mixins.CreateModelMixin,
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['post'], name='activate-ldap',
-            url_path='activate-ldap', **{'perms_map': {'POST':['{}.activate-ldap']}})
+            url_path='activate-ldap', **{'perms_map': {'POST':['{}.ldap_activate']}})
     def activate_ldap(self, request, pk=None):
         user_info  = oaapi.get_userinfo(request.user.username)
         password = request.data.get('password', 'hello1234')
@@ -173,7 +173,7 @@ class LdapViewset(mixins.CreateModelMixin,
         return Response({'detail': 'LDAP已经激活, 登录用户:{}'.format(attributes['uid'])})
 
     @action(detail=False, methods=['post'], name='change-password',
-            url_path='change-password', **{'perms_map': {'POST':['{}.change-password']}})
+            url_path='change-password', **{'perms_map': {'POST':['{}.password_change']}})
     def change_password(self, request, pk=None):
         user_info = oaapi.get_userinfo(request.user.username)
         password = request.data.get('password', 'hello1234')
