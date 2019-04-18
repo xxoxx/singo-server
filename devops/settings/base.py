@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'workOrder.apps.WorkorderConfig',
     'purview.apps.PurviewConfig',
     'ldap.apps.LdapConfig',
+    'SQLAudit.apps.SqlauditConfig',
 ]
 
 # AUTHENTICATION_BACKENDS = (

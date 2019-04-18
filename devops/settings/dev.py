@@ -129,3 +129,10 @@ CACHES = {
         'LOCATION': 'redis://:@127.0.0.1:6379/1'
     }
 }
+
+SQLAUDIT = {
+    'HOST': '172.16.102.31',
+    'PORT': 27017,
+    'USERNAME': 'dba',
+    'PASSWORD': 'dba'
+}
