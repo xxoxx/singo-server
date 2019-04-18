@@ -14,7 +14,8 @@ class NodesAPI(APIView):
     def get(self, request, format=None):
         try:
             databases = [db for db in mongodb_client.list_database_names() if 'audit' in db]
-            data = [{db: mongodb_client[db].collection_names()} for db in databases]
+            # data = [{db: mongodb_client[db].collection_names()} for db in databases]
+            data = [{'db': db, 'tables': mongodb_client[db].collection_names()} for db in databases]
         except Exception as e:
             logger.error(e)
             return Response({'detail': str(e)})
@@ -51,6 +52,7 @@ class NodesAPI(APIView):
 
 class DocumentsAPI(APIView):
     def get(self, request, format=None):
+        # 2019-04-17 00:00:00
         try:
             data = request.GET
             page = int(data.get('page', 1))
@@ -59,12 +61,22 @@ class DocumentsAPI(APIView):
             datetime_end = data.get('datetime_end')
             db_name = data.get('db_type')
             collection_name = data.get('db_instance')
+            accountName =  data.get('account_name', '.*')
+
+
+            limit_count = page * size
+            skip_count = (page-1) * size
 
             collection = mongodb_client[db_name][collection_name]
-            print('=============')
-            print(collection.name)
-            collection.find({'ExecuteTime':{'$gte': datetime_start}})
 
+            cursor = collection.find({'ExecuteTime':{'$gte': datetime_start,
+                                                     '$lte': datetime_end},
+                                      'AccountName':{'$regex': accountName}})
+            # documents = cursor.limit(limit_count).skip(skip_count)
+            print(cursor.count(with_limit_and_skip=True))
+
+            # print(limit_count, skip_count)
+            # print(documents.count(with_limit_and_skip=True))
         except (ValueError, TypeError) as e:
             logger.info(e)
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
