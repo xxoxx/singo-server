@@ -62,7 +62,7 @@ class DocumentsAPI(APIView):
                                       'SQLText': {'$regex': sql_text}}).sort('ExecuteTime', DESCENDING)
             # 分页后的数据
             documents = list(cursor.skip(skip_count).limit(size))
-            print(len(documents))
+
             # 转换MongoDBObjectId
             for i in range(len(documents)):
                 documents[i]['_id'] = str(documents[i]['_id'])
