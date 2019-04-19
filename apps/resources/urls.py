@@ -5,6 +5,7 @@ from .api import server, provider, node
 
 router = DefaultRouter()
 router.register('server', server.ServerViewSet, basename='server')
+router.register('salt-server', server.SaltServerViewSet, basename='salt-server')
 router.register('provider', provider.ProviderViewSet, basename='provider')
 router.register('node/root', node.NodeRootViewSet, basename='node-root')
 

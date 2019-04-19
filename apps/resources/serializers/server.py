@@ -116,8 +116,9 @@ class SaltServerSerializer(serializers.Serializer):
         # instance = self.getInstance(validated_data.get('saltID', None))
         # if instance:
         #     return self.update(instance, validated_data)
-
+        nodes_list = [Node.default_node('SERVERS')]
         instance = Server.objects.create(**init_kwargs(Server, **validated_data))
+        instance.nodes.add(*nodes_list)
         self.__check_all(instance, validated_data)
         return instance
 

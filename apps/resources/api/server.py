@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action
 from rest_framework import status
@@ -14,6 +14,9 @@ from ..models.node import Node
 from common.pagination import CustomPagination
 from ..filters import ServerFilter
 from common.utils import logger
+from common.permissions import IsSuperuser
+from ..createSources.server import saveServer
+from common.apis import saltapi
 
 class ServerViewSet(viewsets.ModelViewSet):
     '''
@@ -37,7 +40,7 @@ class ServerViewSet(viewsets.ModelViewSet):
     serializer_class = ServerSerializer
     list_serializer_class = SaltServerSerializer
     pagination_class = CustomPagination
-    permission_classes = (IsAuthenticated, IsAdminUser)
+    permission_classes = (IsAuthenticated, IsSuperuser)
     queryset = Server.objects.all()
     filter_class = ServerFilter
     ordering_fields = ('hostname', 'created')
@@ -111,3 +114,31 @@ class ServerViewSet(viewsets.ModelViewSet):
             status = 500
 
         return Response(response, status=status)
+
+
+class SaltServerViewSet(viewsets.GenericViewSet):
+    serializer_class = SaltServerSerializer
+    permission_classes = (IsAuthenticated, IsSuperuser)
+
+    def create(self, request, *args, **kwargs):
+        salt_id = request.data.get('keyID')
+        data = saltapi.get_grains_items(salt_id)
+
+        try:
+            if data['code'] == 200:
+                data['comment'] = '来自salt添加'
+                response = saveServer(data)
+                status = 201
+            else:
+                response = {'detail': '获取salt资产信息失败'}
+                status = 500
+        except ValidationError as e:
+            logger.error(e)
+            response = {'detail': '资产中已存在此saltID的资产'}
+            status = 500
+        except Exception as e:
+            logger.error(e)
+            response = {'detail': '添加资产失败'}
+            status = 500
+
+        return Response(data=response, status=status)
