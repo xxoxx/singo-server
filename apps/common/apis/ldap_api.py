@@ -15,7 +15,7 @@ try:
     ldap_conn = Connection(_server,
                     user=settings.LADPAPI.get('LDAP_BIND_USER_DN'),
                     password=settings.LADPAPI.get('LDAP_BIND_USER_PASSWORD'),
-                    auto_bind=True)
+                    auto_bind=True, lazy=True)
 
     # ldap_conn.search(search_base='dc=ztyc,dc=net',
     #             search_filter='(objectClass=top)',
