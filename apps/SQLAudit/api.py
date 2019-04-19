@@ -53,17 +53,16 @@ class DocumentsAPI(APIView):
             # 分页
             page = int(data.get('page', 1))
             size = int(data.get('size', 10))
-            limit_count = page * size
-            skip_count = (page-1) * size
 
+            skip_count = (page-1) * size
             collection = mongodb_client[db_name][collection_name]
             cursor = collection.find({'ExecuteTime':{'$gte': datetime_start,
                                                      '$lte': datetime_end},
                                       'AccountName':{'$regex': accountName},
                                       'SQLText': {'$regex': sql_text}}).sort('ExecuteTime', DESCENDING)
             # 分页后的数据
-            documents = list(cursor.limit(limit_count).skip(skip_count))
-
+            documents = list(cursor.skip(skip_count).limit(size))
+            print(len(documents))
             # 转换MongoDBObjectId
             for i in range(len(documents)):
                 documents[i]['_id'] = str(documents[i]['_id'])
