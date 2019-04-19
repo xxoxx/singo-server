@@ -7,6 +7,8 @@ from common.apis import saltapi
 from common.permissions import IsSuperuser
 from common.utils import logger
 from resources.createSources.server import saveServer
+from resources.models.server import Server
+from common.utils import Bcolor
 
 class SaltKeyAPI(APIView):
     '''
@@ -28,6 +30,17 @@ class SaltKeyAPI(APIView):
 
     def get(self, request, format=None):
         data = saltapi.key_list()
+        minions = data.get('minions')
+        in_assets = {}
+
+        # 判断是否在资产中已经存在
+        for minion in minions:
+            try:
+                Server.objects.get(saltID=minion)
+                in_assets[minion] = True
+            except Server.DoesNotExist:
+                in_assets[minion] = False
+        data['in_assets'] = in_assets
         return Response(data)
 
     def post(self, request, format=None ):
