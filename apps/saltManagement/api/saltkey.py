@@ -72,20 +72,20 @@ class SaltKeyAPI(APIView):
 
 class Test(APIView):
     def get(self, request, format=None):
-        data = saltapi.get_grains_items('devops')
+        data = saltapi.get_grains_items('devops1')
 
         print('===========================')
-        data['comment'] = '来自salt添加'
-        if data['code'] == 200:
-            try:
-                data = saveServer(data)
-            except ValidationError as e:
-                print(e)
-                print('赵永强你麻痹')
-            except Exception as e:
-
-                print(e)
-                print('我抓住你了')
+        # data['comment'] = '来自salt添加'
+        # if data['code'] == 200:
+        #     try:
+        #         data = saveServer(data)
+        #     except ValidationError as e:
+        #         print(e)
+        #         print('赵永强你麻痹')
+        #     except Exception as e:
+        #
+        #         print(e)
+        #         print('我抓住你了')
 
         print(data)
         # from resources.models import Server

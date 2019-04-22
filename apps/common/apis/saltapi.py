@@ -243,12 +243,12 @@ class SaltAPI(object):
         try:
             req = self.get(prefix=prefix)
             logger.debug(req.json())
+            data = req.json()
+            response = data['return'][0][key_id]
             if req.status_code != 200:
                 response =  {'code': req.status_code, 'detail': '请求异常'}
-            else:
-                data = req.json()
-                response = data['return'][0][key_id]
-                response['code'] = 200
+            elif not data:
+                response = {'code': -1, 'detail': 'minion 返回false'}
         except Exception as e:
             logger.error(e)
             response = {'code': -1, 'detail': 'salt api返回数据异常'}
