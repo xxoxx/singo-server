@@ -164,7 +164,7 @@ class LdapViewset(mixins.CreateModelMixin,
 
             # 设置数据库标记
             properties = json.loads(request.user.properties)
-            properties['activate_ldap'] = False
+            properties['activate_ldap'] = True
             request.user.properties = json.dumps(properties)
             request.user.save()
         else:
