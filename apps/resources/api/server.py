@@ -130,7 +130,7 @@ class SaltServerViewSet(viewsets.GenericViewSet):
                 response = saveServer(data)
                 status = 201
             else:
-                response = {'detail': '获取salt资产信息失败'}
+                response = {'detail': data.get('detail')}
                 status = 500
         except ValidationError as e:
             logger.error(e)
