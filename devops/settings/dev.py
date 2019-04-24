@@ -134,5 +134,5 @@ SQLAUDIT = {
     'HOST': '172.16.102.31',
     'PORT': 27017,
     'USERNAME': 'dba',
-    'PASSWORD': 'dba'
+    'PASSWORD': 'dba_123'
 }
