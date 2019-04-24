@@ -5,6 +5,7 @@ from rest_framework import viewsets, permissions, mixins, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from pymongo import DESCENDING
+from datetime import datetime
 
 from common.apis import mongodb_client
 from common.utils import logger
@@ -43,8 +44,8 @@ class DocumentsAPI(APIView):
             data = request.GET
 
             # 查询条件
-            datetime_start = data.get('datetime_start')
-            datetime_end = data.get('datetime_end')
+            datetime_start = datetime.strptime(data.get('datetime_start'), '%Y-%m-%d %H:%M:%S')
+            datetime_end = datetime.strptime(data.get('datetime_end'), '%Y-%m-%d %H:%M:%S')
             db_name = data.get('db_type')
             collection_name = data.get('db_instance')
             accountName = data.get('account_name', '.*')
