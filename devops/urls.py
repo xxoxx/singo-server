@@ -59,8 +59,9 @@ api_patterns = [
     url(r'^workorder/v1/', include('workOrder.urls', namespace='api-work-order', app_name='workOrder')),
     url(r'^permissions/v1/', include('purview.urls.urls_v1', namespace='api-permissions', app_name='purview')),
     url(r'^permissions/v2/', include('purview.urls.urls_v2', namespace='api-permissions-v2', app_name='purview')),
-    url(r'^ldap/v1/', include('ldap.urls', namespace='api-ldap', app_name='ldap')),
-    url(r'^SQLAudit/v1/', include('SQLAudit.urls', namespace='sql-audit', app_name='SQLAudit')),
+    url(r'^ldap/v1/', include('ldap.urls', namespace='api-api-ldap', app_name='api-ldap')),
+    url(r'^SQLAudit/v1/', include('SQLAudit.urls', namespace='api-sql-audit', app_name='SQLAudit')),
+    url(r'^deploy/v1/', include('deploy.urls', namespace='api-deploy', app_name='deploy')),
 
 ]
 

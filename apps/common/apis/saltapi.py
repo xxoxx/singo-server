@@ -26,11 +26,17 @@ class SaltAPI(object):
         else:
             self.get_token()
 
-    def post(self, data, headers=None, prefix='/'):
-        if not headers:
+    def post(self, headers=None, data=None, json=None, prefix='/'):
+        if not headers and data:
             headers = {
+                'X-Auth-Token': self.__token,
                 'Accept': 'application/json',
-                'X-Auth-Token': self.__token
+            }
+        elif not headers and json:
+            headers = {
+                'X-Auth-Token': self.__token,
+                'Accept': 'application/json',
+                'Content-type': 'application/json'
             }
 
         url = '{}{}'.format(self.__url, prefix)
@@ -40,7 +46,7 @@ class SaltAPI(object):
             headers['X-Auth-Token'] = self.__token
 
         req = requests.post(url, headers=headers,
-                            data=data, verify=False, timeout=self.__timeout)
+                            data=data, json=json, verify=False, timeout=self.__timeout)
         return req
 
     def get_token(self, prefix='/login'):
@@ -272,6 +278,32 @@ class SaltAPI(object):
             response = req.json().get('return', req.json())
         return response
 
+    def remote_state(self):
+        """
+        异步执行state模块
+        """
+
+        # data = {'client': 'local', 'tgt': '*',
+        #         'fun': 'state.sls',
+        #         'kwarg': {'pillar':
+        #                       {'foo': 'Foo123!'},
+        #                        'mods': 'test.shell',
+        #                        'saltenv': 'dev'
+        #                   }
+        #         }
+        #
+        # 'Content-type': 'application/json'
+
+        data = {'client': 'local', 'tgt': ['devops'],
+                'fun': 'state.sls', 'arg': ['test.shell',
+                                            "pillar={'foo':'Foo123!'}",
+                                            "saltenv=dev"]
+                }
+        ret = self.post(data=data)
+        print('==========')
+        print(ret.json())
+        return ret
+
 
 try:
     saltapi = None
@@ -279,8 +311,7 @@ try:
     username = settings.SALTAPI.get('USERNAME')
     password = settings.SALTAPI.get('PASSWORD')
     saltapi = SaltAPI(url=url, username=username, password=password)
-
-
+    # print(saltapi.remote_state())
     # print(saltapi.run_script('devops', 'scripts/python/get_system_info.py'))
     # saltapi.run_script('devops', 'scripts/python/test.py')
     # print(saltapi.post(**{'client': 'wheel', 'fun': 'key.list_all'}))

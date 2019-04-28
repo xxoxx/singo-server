@@ -11,11 +11,13 @@ from common.permissions import DevopsPermission
 from common.pagination import CustomPagination
 from ..serializers import DeploymentOrderSerializer
 from ..models import DeploymentOrder
+from ..filters import DeploymentOrderFilter
 
 
 class DeploymentOrderViewSet(viewsets.ModelViewSet):
     serializer_class = DeploymentOrderSerializer
     permission_classes = (permissions.IsAuthenticated,)
+    filter_class = DeploymentOrderFilter
     search_fields = ('title', 'project')
     ordering_fields = ('apply_time',)
     pagination_class = CustomPagination

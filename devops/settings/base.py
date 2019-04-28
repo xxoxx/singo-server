@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'purview.apps.PurviewConfig',
     'ldap.apps.LdapConfig',
     'SQLAudit.apps.SqlauditConfig',
+    'deploy.apps.DeployConfig',
 ]
 
 # AUTHENTICATION_BACKENDS = (

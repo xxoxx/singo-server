@@ -136,3 +136,24 @@ SQLAUDIT = {
     'USERNAME': 'dba',
     'PASSWORD': 'dba_123'
 }
+
+GITLABS = [
+    {
+        'URL': 'http://git.ops.com',
+        'TOKEN': 'gsdU_1zEq5Cmoq3seGSF'
+    }
+]
+
+# JENKINS = {
+#     # 'URL': 'http://ci.ops.com',
+#     # 'USER': 'cainanjie',
+#     # 'TOKEN': '119c8e97980559a91210458a8a9e8864f3',
+#     'SALT_KEY': '',
+#     'URI': 'http://{}:{}@ci.ops.com'.format('cainanjie', '119c8e97980559a91210458a8a9e8864f3')
+# }
+JENKINS = {
+    'URL': 'http://jenkins.it',
+    'USER': 'zhoujinliang',
+    'TOKEN': '117c911a35acf51e428e29f3ccb363f53f',
+    'URI': 'http://{}:{}@jenkins.it'.format('zhoujinliang', '117c911a35acf51e428e29f3ccb363f53f')
+}
