@@ -72,9 +72,11 @@ class SaltKeyAPI(APIView):
 
 class Test(APIView):
     def get(self, request, format=None):
-        data = saltapi.get_grains_items('devops1')
+        # data = saltapi.get_grains_items('devops1')
 
         print('===========================')
+        import time
+        time.sleep(30)
         # data['comment'] = '来自salt添加'
         # if data['code'] == 200:
         #     try:
@@ -87,7 +89,7 @@ class Test(APIView):
         #         print(e)
         #         print('我抓住你了')
 
-        print(data)
+        # print(data)
         # from resources.models import Server
         # from resources.serializers import SaltServerSerializer
         # server = Server.objects.get(pk='9d20bd5985b447d083bb6d9fac6cbba3')
