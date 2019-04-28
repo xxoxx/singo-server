@@ -39,3 +39,9 @@ class Server(models.Model):
     # node
     nodes = models.ManyToManyField('Node', related_name='server', verbose_name='节点')
 
+    def __str__(self):
+        return self.hostname
+
+    class Meta:
+        verbose_name = '服务器'
+        verbose_name_plural = '服务器'
