@@ -27,6 +27,7 @@ class IsSuperuserOrSelf(IsSuperuser):
         return super(IsSuperuserOrSelf, self).has_permission(request, view) or request.user.is_owner(obj)
 
 
+# 自定义权限
 class DevopsPermission(permissions.BasePermission):
     def get_required_permissions(self, method, app_label, perms_map):
         if method not in perms_map:
@@ -38,5 +39,16 @@ class DevopsPermission(permissions.BasePermission):
             return True
         app_label = resolve(request.path).app_name
         perms = self.get_required_permissions(request.method, app_label, view.perms_map)
-        print(perms)
         return request.user.has_perms(perms)
+
+
+# 发布权限
+class DeployPermission(permissions.BasePermission):
+    message = '你没有执行发布的权限'
+
+    # 超级用户、运维、执行人拥有此权限
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser or request.user.is_devops or obj.assign_to == request.user:
+            return True
+        else:
+            return False

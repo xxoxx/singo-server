@@ -30,7 +30,7 @@ LOGGING = {
     'formatters':{
         'detail': {
             # 'format': '{"levelname":"%(levelname)s","asctime":"%(asctime)s","module":"%(name)s","fullpath":"%(pathname)s","funcName":"%(funcName)s","lineno":"%(lineno)s","message":"%(message)s"}',
-            'format': '%(levelname)s %(asctime)s %(name)s %(pathname)s %(funcName)s  %(lineno)s  %(message)s',
+            'format': '%(levelname)s %(asctime)s %(name)s %(module)s %(funcName)s %(lineno)s %(message)s',
         }
     },
     'handlers': {
@@ -156,4 +156,9 @@ JENKINS = {
     'USER': 'zhoujinliang',
     'TOKEN': '117c911a35acf51e428e29f3ccb363f53f',
     'URI': 'http://{}:{}@jenkins.it'.format('zhoujinliang', '117c911a35acf51e428e29f3ccb363f53f')
+}
+
+DEPLOY = {
+    'CODE_PATH': '/srv/salt/deploy/',
+    'M_MINION': 'devops'   #master下的minion
 }

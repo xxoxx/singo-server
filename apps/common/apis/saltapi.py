@@ -87,7 +87,6 @@ class SaltAPI(object):
             logger.critical(e)
             raise e
 
-
     def get(self, prefix='/', **data):
         headers = {
             'Accept': 'application/json',
@@ -261,6 +260,18 @@ class SaltAPI(object):
             logger.error(e)
             response = {'code': -1, 'detail': 'salt api返回数据异常'}
         return response
+
+    # --------------------------cmd-------------------------------
+    def cmd_run(self, tgt, client='local', expr_form='list', arg=''):
+        data = {
+                    'client': client, 'tgt': tgt,
+                    'fun': 'cmd.run', 'arg': arg,
+                    'expr_form': expr_form
+                }
+
+        ret = self.post(data=data)
+        logger.debug(ret.text)
+        return ret.json()
 
     def run_script(self, tgt, path):
         data = {

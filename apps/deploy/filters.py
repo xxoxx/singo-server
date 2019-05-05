@@ -8,7 +8,7 @@ from .models import DeploymentOrder
 
 class DeploymentOrderFilter(django_filters.rest_framework.FilterSet):
     '''
-    上线单过滤git
+    上线单过滤
     '''
     ENV = (
         (0, '生产'),

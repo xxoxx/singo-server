@@ -1,2 +1,5 @@
-__author__ = 'singo'
-__datetime__ = '2019/4/30 9:36 AM '
+'''
+1.需要初始化devops组
+2.初始化/srv/salt/deploy的权限
+3.初始化/srv/salt/deploy/logs的权限
+'''

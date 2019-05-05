@@ -73,21 +73,9 @@ class SaltKeyAPI(APIView):
 class Test(APIView):
     def get(self, request, format=None):
         # data = saltapi.get_grains_items('devops1')
-
+        from common.apis import saltapi
         print('===========================')
-        import time
-        time.sleep(30)
-        # data['comment'] = '来自salt添加'
-        # if data['code'] == 200:
-        #     try:
-        #         data = saveServer(data)
-        #     except ValidationError as e:
-        #         print(e)
-        #         print('赵永强你麻痹')
-        #     except Exception as e:
-        #
-        #         print(e)
-        #         print('我抓住你了')
+        # ret = saltapi.cmd_run('devops', expr_form='pcre', arg='grep -Fc api/deploy /srv/salt/deploy/devops/init.sls')
 
         # print(data)
         # from resources.models import Server

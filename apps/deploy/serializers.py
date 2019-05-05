@@ -2,7 +2,7 @@ __author__ = 'singo'
 __datetime__ = '2019/4/26 4:27 PM '
 
 from rest_framework import serializers
-from .models import Project, DeploymentOrder
+from .models import Project, DeploymentOrder, History
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -24,7 +24,7 @@ class ProjectSerializer(serializers.ModelSerializer):
                                'id': instance.creator.id,
                                'name': instance.creator.name
                            }
-        ret['servers']= [{'id': s.id,'hostname':s.hostname }for s in instance.servers.all()]
+        ret['servers']= [{'id': s.id, 'hostname':s.hostname, 'ip':s._IP}for s in instance.servers.all()]
 
         return ret
 
@@ -54,3 +54,9 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
         }
 
         return ret
+
+class HistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = History
+        fields = '__all__'
+        read_only_fields = ['id']
