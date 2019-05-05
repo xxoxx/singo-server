@@ -36,3 +36,11 @@ def scheduler_run_now(scheduler, *args, **kwargs):
     return wrapper
 
 
+def my_scheduler_run_now(*args, **kwargs):
+    def wrapper(func):
+        def inner(*a, **k):
+            scheduler.add_job(func, *args, **kwargs, run_date=datetime.now(), args=a, kwargs=k)
+        return inner
+    return wrapper
+
+
