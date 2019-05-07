@@ -6,3 +6,4 @@ from .saltapi import saltapi
 from .mangodb_api import mongodb_client
 from .gitlab_api import gitlab_api
 from .jenkins_api import jenkins_api
+from .dingtalk_chatbot_api import dingtalk_chatbot
