@@ -46,7 +46,7 @@ def create_or_update_history(order_obj=None, deploy_cache=None, obj=None, **kwar
                         'title': order_obj.title,
                         'project_name': order_obj.project.name,
                         'env': order_obj.env,
-                        'action': 0,
+                        'type': 0,
                         'servers_ip': order_obj.project.servers_ip,
                         'servers_saltID':order_obj.project.servers_saltID,
                         'branche': order_obj.branche,

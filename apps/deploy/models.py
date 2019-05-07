@@ -20,7 +20,7 @@ ENV = (
     (TEST, '测试')
 )
 
-ACTION = (
+TYPE = (
     (ONLINE, '上线'),
     (ROLLBACK, '回滚'),
     (REONLONE, '重新上线')
@@ -58,7 +58,7 @@ class DeploymentOrder(models.Model):
     title = models.CharField(max_length=128, blank=False, null=False, verbose_name='标题')
     project = models.ForeignKey(Project, blank=False, null=False, related_name='order', verbose_name='项目')
     # 上线或者回滚
-    action = models.IntegerField(choices=ACTION, default=ONLINE, verbose_name='动作')
+    type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='类型')
     env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
     branche = models.CharField(max_length=64, blank=False, null=False, verbose_name='分支')
     commit_id = models.CharField(max_length=32, blank=False, null=False, verbose_name='commit id')
@@ -93,7 +93,7 @@ class History(models.Model):
     title = models.CharField(max_length=128, verbose_name='标题')
     project_name = models.CharField(max_length=64, verbose_name='项目名')
     env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
-    action = models.IntegerField(choices=ACTION, default=ONLINE, verbose_name='动作')
+    type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='动作')
     servers_ip = models.TextField(verbose_name='部署服务器IP')
     servers_saltID = models.TextField(verbose_name='部署服务器saltID')
     branche = models.CharField(max_length=64, verbose_name='分支')
