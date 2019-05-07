@@ -6,7 +6,12 @@ from datetime import datetime
 logger = logging.getLogger('devops')
 
 try:
-    scheduler = BackgroundScheduler()
+    scheduler = BackgroundScheduler(
+        job_defaults={
+            'max_instances': 1000,
+            'misfire_grace_time': 60
+        },
+    )
     # scheduler.add_jobstore(DjangoJobStore(), 'default')
     # register_events(scheduler)
     scheduler.start()
