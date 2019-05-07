@@ -3,25 +3,27 @@ import uuid
 
 from users.models import User
 from resources.models import Server
+from .common import *
 
 STATUS = (
-    (0, '待审核'),
-    (1, '待上线'),
-    (2, '上线中'),
-    (3, '已上线'),
-    (4, '未通过'),
-    (5, '上线失败')
+    (UNREVIEWED, '待审核'),
+    (GOONLINE, '待上线'),
+    (ONLINEING, '上线中'),
+    (ONLINED, '已上线'),
+    (REJECT, '未通过'),
+    (FAIL, '上线失败')
 )
 
 ENV = (
-    (0, '生产'),
-    (1, '预发布'),
-    (2, '测试')
+    (PRO, '生产'),
+    (PRE, '预发布'),
+    (TEST, '测试')
 )
 
 ACTION = (
-    (0, '上线'),
-    (1, '回滚')
+    (ONLINE, '上线'),
+    (ROLLBACK, '回滚'),
+    (REONLONE, '重新上线')
 )
 
 class Project(models.Model):
@@ -51,12 +53,13 @@ class Project(models.Model):
         verbose_name = '项目配置'
         verbose_name_plural = verbose_name
 
-
 class DeploymentOrder(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     title = models.CharField(max_length=128, blank=False, null=False, verbose_name='标题')
     project = models.ForeignKey(Project, blank=False, null=False, related_name='order', verbose_name='项目')
-    env = models.IntegerField(choices=ENV, default=0, verbose_name='部署环境')
+    # 上线或者回滚
+    action = models.IntegerField(choices=ACTION, default=ONLINE, verbose_name='动作')
+    env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
     branche = models.CharField(max_length=64, blank=False, null=False, verbose_name='分支')
     commit_id = models.CharField(max_length=32, blank=False, null=False, verbose_name='commit id')
     commit = models.CharField(max_length=256, blank=False, null=False, verbose_name='git commit')
@@ -65,8 +68,9 @@ class DeploymentOrder(models.Model):
     reviewer = models.ForeignKey(User, blank=False, null=False, related_name='dmo_reviewer', verbose_name='审核人')
     assign_to = models.ForeignKey(User, null=False, blank=False, related_name='dmo_assigned', verbose_name='上线人')
     apply_time = models.DateTimeField(auto_now_add=True, verbose_name='申请时间')
-    status = models.IntegerField(choices=STATUS, default=0, verbose_name='状态')
+    status = models.IntegerField(choices=STATUS, default=UNREVIEWED, verbose_name='状态')
     result = models.TextField(max_length=512, blank=True, verbose_name='结果')
+    deploy_times = models.IntegerField(default=0, verbose_name='部署次数')
 
     def __str__(self):
         return self.title
@@ -77,17 +81,19 @@ class DeploymentOrder(models.Model):
         ordering = ['-apply_time']
 
 HISTORY_STATUS = (
-    (0, '成功'),
-    (1, '失败'),
-    (2, '取消'),
-    (3, '未知')
+    (SUCCESSFUL, '成功'),
+    (FAILED, '失败'),
+    (CANCELED, '取消'),
+    (UNKNOWN, '未知')
 )
 
 class History(models.Model):
+    order_id = models.UUIDField(verbose_name='上线单ID')
+    deploy_times = models.IntegerField(verbose_name='关联工单部署次数')
     title = models.CharField(max_length=128, verbose_name='标题')
     project_name = models.CharField(max_length=64, verbose_name='项目名')
-    env = models.IntegerField(choices=ENV, default=0, verbose_name='部署环境')
-    action = models.IntegerField(choices=ACTION, default=0, verbose_name='动作')
+    env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
+    action = models.IntegerField(choices=ACTION, default=ONLINE, verbose_name='动作')
     servers_ip = models.TextField(verbose_name='部署服务器IP')
     servers_saltID = models.TextField(verbose_name='部署服务器saltID')
     branche = models.CharField(max_length=64, verbose_name='分支')
@@ -98,8 +104,17 @@ class History(models.Model):
     applicant = models.CharField(max_length=32, verbose_name='申请人')
     reviewer = models.CharField(max_length=32, verbose_name='审核人')
     assign_to = models.CharField(max_length=32, verbose_name='上线人')
-    result = models.IntegerField(choices=HISTORY_STATUS, default=3, verbose_name='状态')
+    result = models.IntegerField(choices=HISTORY_STATUS, default=UNKNOWN, verbose_name='状态')
     start = models.DateTimeField(auto_now_add=True, verbose_name='开始时间')
     end = models.DateTimeField(null=True, verbose_name='结束时间')
-    log = models.CharField(max_length=128, verbose_name='部署日志')
-    error = models.TextField(null=True, verbose_name='异常')
+    log_file = models.CharField(max_length=128, verbose_name='部署日志')
+    error_msg = models.TextField(null=True, verbose_name='异常信息')
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = '历史记录'
+        verbose_name_plural = verbose_name
+        ordering = ['-id']
+        unique_together = ('order_id', 'deploy_times')

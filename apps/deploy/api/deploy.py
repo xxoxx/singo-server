@@ -1,5 +1,5 @@
 __author__ = 'singo'
-__datetime__ = '2019/4/28 10:42 AM '
+__datetime__ = '2019/4/28 10:42 AM'
 
 
 from rest_framework import viewsets, permissions, mixins, status
@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.core.cache import cache
 from django.conf import settings
-import os, time
+import os, time, linecache
 
 
 from common.utils import logger
@@ -19,22 +19,9 @@ from ..models import DeploymentOrder
 from ..filters import DeploymentOrderFilter
 from common.apis import jenkins_api, saltapi
 from ..tasks import start_job
+from ..common import *
 
 
-class DeploymentOrderViewSet(viewsets.ModelViewSet):
-    serializer_class = DeploymentOrderSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_class = DeploymentOrderFilter
-    search_fields = ('title', 'project')
-    ordering_fields = ('apply_time',)
-    pagination_class = CustomPagination
-    queryset = DeploymentOrder.objects.all()
-
-    def get_queryset(self):
-        if self.request.user.is_superuser:
-            return DeploymentOrder.objects.all()
-        else:
-            return DeploymentOrder.objects.filter(applicant=self.request.user)
 
 
 class DeployJob(APIView):
@@ -47,11 +34,12 @@ class DeployJob(APIView):
 
     def post(self, request, pk, format=None):
         order_obj = self.get_object()
+
         try:
             # cache.delete(obj.project.name)
             name = order_obj.project.jenkins_job
             cache_name = 'deploy-{}'.format(order_obj.project.name)
-            deploy_cache = cache.get(order_obj.project.name, {})
+            deploy_cache = cache.get(cache_name, {})
             deploy_path = settings.DEPLOY.get('CODE_PATH')
 
             # 避免被重复执行部署
@@ -61,7 +49,7 @@ class DeployJob(APIView):
                 raise DeployError('该工单状态不能上线')
 
             # 上线中
-            order_obj.status = 2
+            order_obj.status = ONLINEING
             order_obj.save()
 
             # 启动jenkins构建
@@ -111,33 +99,39 @@ class DeployJob(APIView):
 
     def get(self, request, pk, format=None):
         data = cache.get('deploy-devops-server')
+        cache.delete('deploy-devops-server')
         return Response(data)
 
+class DeployRealtimeLog(APIView):
+    permission_classes = (permissions.IsAuthenticated, DeployPermission)
+
+    def get_object(self):
+        obj = get_object_or_404(DeploymentOrder, pk=self.kwargs["pk"])
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    def get(self, request, pk, format=None):
+        try:
+            order_obj = self.get_object()
+            cache_name = 'deploy-{}'.format(order_obj.project.name)
+            deploy_cache = cache.get(cache_name, {})
+            log_file = deploy_cache.get('log')
+            lineno = int(request.GET.get('lineno', 0))
+
+            if not deploy_cache:
+                return Response({'detial': '找不到此工单的实时上线信息'}, status=status.HTTP_404_NOT_FOUND)
+
+            lines  = linecache.getlines(log_file)[lineno-1:]
+            return Response(lines)
+        except Exception as e:
+            logger.exception(e)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 class Test(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request, format=None):
-        from ..models import History
-        import datetime
-        obj = History.objects.create(
-            **{
-                'servers_ip': '127.0.0.1',
-                'servers_saltID':'devops',
-                'branche': '123',
-                'commit_id': '123456',
-                'commit': 'commit',
-                'jk_number': 1,
-                'applicant': 'test',
-                'reviewer': 'test',
-                'assign_to': 'test',
-                'result': 0,
-                'log': '/temp'
-            }
-        )
-        # obj = History.objects.get(pk=1)
-        # obj.__dict__.update({'commit_id': '654321'})
-        # obj.save()
+        print(jenkins_api.test())
         return Response('lemon1912', status=200)
 
 from rest_framework.exceptions import APIException

@@ -10,11 +10,11 @@ from common.apis import jenkins_api
 from common.utils import logger
 from .models import History
 from datetime import datetime
+from .common import *
 
 
-def save_order_obj(order_obj, result):
-    order_obj.status = 5
-    order_obj.result = result
+def save_order_obj(order_obj, **kwargs):
+    order_obj.__dict__.update(**kwargs)
     order_obj.save()
 
 def jenkins_log(f, job_name, build_number, line_number):
@@ -41,6 +41,8 @@ def create_or_update_history(order_obj=None, deploy_cache=None, obj=None, **kwar
         else:
             obj = History.objects.create(
                     **{
+                        'order_id': order_obj.id,
+                        'deploy_times': order_obj.deploy_times,
                         'title': order_obj.title,
                         'project_name': order_obj.project.name,
                         'env': order_obj.env,
@@ -54,7 +56,7 @@ def create_or_update_history(order_obj=None, deploy_cache=None, obj=None, **kwar
                         'applicant': order_obj.applicant.name,
                         'reviewer': order_obj.reviewer.name,
                         'assign_to': order_obj.assign_to.name,
-                        'log': deploy_cache.get('log'),
+                        'log_file': deploy_cache.get('log'),
                     }
             )
             return obj
@@ -120,6 +122,8 @@ def download_package(f, cache_name, deploy_cache, order_obj):
 @my_scheduler_run_now('date')
 def start_job(cache_name, order_obj):
     try:
+        # 设置第几次执行上线单
+        order_obj.deploy_times += 1
         deploy_cache = cache.get(cache_name, {})
         # 记录日志
         history = create_or_update_history(order_obj, deploy_cache)
@@ -127,11 +131,14 @@ def start_job(cache_name, order_obj):
 
         #################jenkins构建################
         build(f, cache_name, deploy_cache, history)
+
+        ###################下载代码##################
+        download_package(f, cache_name, deploy_cache, order_obj)
     except Exception as e:
         logger.exception(e)
-        save_order_obj(order_obj, str(e))
+        save_order_obj(order_obj, **{'result': str(e), 'status': 5})
         kwargs = {
-            'result': 1,
+            'result': FAILED,
             'error': str(e),
             'end': datetime.now()
         }
@@ -207,3 +214,4 @@ def start_job(cache_name, order_obj):
     print(order_obj.title)
 
     create_or_update_history(obj=history, **{'result': 0, 'end': datetime.now()})
+    save_order_obj(order_obj, **{'status': 3})

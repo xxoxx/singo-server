@@ -162,3 +162,7 @@ DEPLOY = {
     'CODE_PATH': '/srv/salt/deploy/',
     'M_MINION': 'devops'   #master下的minion
 }
+
+DINGTALK_CHATBOT = {
+    'URI': 'https://oapi.dingtalk.com/robot/send?access_token=a21a1df49d416fd8cca372a3ce7b3435bd3604f0c1d25779116f96d46bb390b1'
+}

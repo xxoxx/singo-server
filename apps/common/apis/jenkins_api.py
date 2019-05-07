@@ -54,10 +54,8 @@ class JenkinsAPI(object):
                         f.write(chunk)
         return local_full_filename
 
-    def test(self, number):
-        return self.__server.get_build_console_output('devops', 24)
-        return self.__server.get_queue_item(number)
-        # return self.__server.get_build_info('devops', 5).get('queueId', -1)
+    def test(self):
+        return self.__server.get_build_info('devops', 43)
         # return self.__server.get_queue_info()
 
 jenkins_api = JenkinsAPI()

@@ -52,6 +52,11 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
             'id': instance.assign_to.id,
             'name': instance.assign_to.name
         }
+        # 关联项目
+        ret ['project'] = {
+            'id': instance.project.id,
+            'name': instance.project.name
+        }
 
         return ret
 
