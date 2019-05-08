@@ -4,13 +4,15 @@ __datetime__ = '2019/4/28 9:57 PM '
 
 import time
 from django.core.cache import cache
+from functools import wraps
 
 from common.apscheduler import my_scheduler_run_now
 from common.apis import jenkins_api, dingtalk_chatbot
 from common.utils import logger
 from .models import History
-from datetime import datetime
+from datetime import datetime, timedelta
 from .common import *
+
 
 
 def save_order_obj(order_obj, **kwargs):
@@ -119,10 +121,22 @@ def download_package(f, cache_name, deploy_cache, order_obj):
                                  build_number)
 
 
+def timing(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        order_obj = args[1]
+        dingtalk_chatbot.text_msg('开始上线项目: {}'.format(order_obj.project.name))
+        start = time.time()
+        f(*args, **kwargs)
+        end = time.time()
+        elapsed_time = round((end - start), 0)
+        dingtalk_chatbot.text_msg('{}已完成上线,耗时: {}'.format(order_obj.project.name, timedelta(seconds=elapsed_time)))
+    return wrapper
+
 @my_scheduler_run_now('date')
+@timing
 def start_job(cache_name, order_obj):
     try:
-        dingtalk_chatbot.text_msg('开始上线项目: {}'.format(order_obj.project.name))
         # 设置第几次执行上线单
         order_obj.deploy_times += 1
         deploy_cache = cache.get(cache_name, {})
@@ -218,20 +232,15 @@ def start_job(cache_name, order_obj):
     save_order_obj(order_obj, **{'status': 3})
 
 
-from functools import wraps
-from time import time
-
-
-def timing(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        start = time()
-        f(*args, **kwargs)
-        end = time()
-        elapsed_time = round((end - start), 2)
-        print(elapsed_time)
-        print(args)
-    return wrapper
+# def timing(*args, **kwargs):
+#     def wrapper(f):
+#         def inner(*a, **k):
+#             start = time()
+#             f(*a, **k)
+#             end = time()
+#             elapsed_time = round((end - start), 2)
+#         return inner
+#     return wrapper
 
 
 @my_scheduler_run_now('date')
