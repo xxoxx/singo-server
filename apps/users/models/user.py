@@ -49,7 +49,7 @@ class User(AbstractUser):
            return False
 
     def __str__(self):
-        return self.username
+        return self.name or self.username
 
     # 判断是不是运维人员
     @property
