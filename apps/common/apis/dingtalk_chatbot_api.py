@@ -9,8 +9,8 @@ from common.utils import logger
 
 class DingtalkChatbot(object):
     def __init__(self):
-        self.webhook = settings.DINGTALK_CHATBOT.get('URI')
-        self.headers = {'content-type': 'application/json', 'charset': 'utf-8'}
+        self.__webhook = settings.DINGTALK_CHATBOT.get('URI')
+        self.__headers = {'content-type': 'application/json', 'charset': 'utf-8'}
 
 
     def text_msg(self, content, at_mobiles=[], at_all=False):
@@ -37,7 +37,7 @@ class DingtalkChatbot(object):
 
     def __post(self, data):
         try:
-            ret = requests.post(self.webhook, data=json.dumps(data), headers=self.headers)
+            ret = requests.post(self.__webhook, data=json.dumps(data), headers=self.__headers)
             if ret.json().get('errcode') != 0:
                 raise Exception('钉钉机器人发送消息失败')
         except Exception as e:

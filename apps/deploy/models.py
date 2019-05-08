@@ -97,7 +97,7 @@ class History(models.Model):
     servers_ip = models.TextField(verbose_name='部署服务器IP')
     servers_saltID = models.TextField(verbose_name='部署服务器saltID')
     branche = models.CharField(max_length=64, verbose_name='分支')
-    commit_id = models.CharField(max_length=32, verbose_name='commit id')
+    commit_id = models.CharField(max_length=64, verbose_name='commit id')
     commit = models.CharField(max_length=256, verbose_name='git commit')
     jk_number = models.IntegerField(verbose_name='jenkins 构建ID')
     jk_result = models.CharField(max_length=32,default='unknown', verbose_name='jenkins 构建结果')

@@ -42,7 +42,7 @@ class GitlabProjectBranchesList(APIView):
             elif len(branches) == 1:
                 data = [{
                             'name': branch.name,
-                            'commit_id': branch.commit.get('short_id'),
+                            'commit_id': branch.commit.get('id'),
                             'message': branch.commit.get('message'),
                             'created': branch.commit.get('created_at')
                         }for branch in branches[0]]

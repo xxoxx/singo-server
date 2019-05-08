@@ -160,7 +160,8 @@ JENKINS = {
 
 DEPLOY = {
     'CODE_PATH': '/srv/salt/deploy/',
-    'M_MINION': 'devops'   #master下的minion
+    'M_MINION': 'devops',   # master下的minion
+    'ROLLBACK_SIZE': 5      # jenkins上面保留版本必须大于ROLLBACK_SIZE否则会导致回滚失败
 }
 
 DINGTALK_CHATBOT = {

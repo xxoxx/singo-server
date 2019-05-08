@@ -18,7 +18,7 @@ from ..serializers import DeploymentOrderSerializer
 from ..models import DeploymentOrder
 from ..filters import DeploymentOrderFilter
 from common.apis import jenkins_api, saltapi
-from ..tasks import start_job
+from ..tasks import start_job, test
 from ..common import *
 
 
@@ -131,7 +131,7 @@ class Test(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request, format=None):
-        print(jenkins_api.test())
+        test('a', 'b')
         return Response('lemon1912', status=200)
 
 from rest_framework.exceptions import APIException

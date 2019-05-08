@@ -17,5 +17,6 @@ urlpatterns = [
     url(r'^jenkins/jobs/', jenkins.JenkinsJobList.as_view(), name='jenkins-jobs'),
     url(r'^deploy/(?P<pk>[a-z0-9\-]+)/$', deploy.DeployJob.as_view(), name='deploy'),
     url(r'^deploy/(?P<pk>[a-z0-9\-]+)/log/$', deploy.DeployRealtimeLog.as_view(), name='deploy-log'),
+    url(r'^rollback/(?P<project_name>[a-z0-9\-]+)/$', order.RollBackList.as_view(), name='rollback'),
     url(r'^test/', deploy.Test.as_view(), name='test'),
     ]

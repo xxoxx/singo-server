@@ -6,7 +6,7 @@ import time
 from django.core.cache import cache
 
 from common.apscheduler import my_scheduler_run_now
-from common.apis import jenkins_api
+from common.apis import jenkins_api, dingtalk_chatbot
 from common.utils import logger
 from .models import History
 from datetime import datetime
@@ -122,6 +122,7 @@ def download_package(f, cache_name, deploy_cache, order_obj):
 @my_scheduler_run_now('date')
 def start_job(cache_name, order_obj):
     try:
+        dingtalk_chatbot.text_msg('开始上线项目: {}'.format(order_obj.project.name))
         # 设置第几次执行上线单
         order_obj.deploy_times += 1
         deploy_cache = cache.get(cache_name, {})
@@ -215,3 +216,27 @@ def start_job(cache_name, order_obj):
 
     create_or_update_history(obj=history, **{'result': 0, 'end': datetime.now()})
     save_order_obj(order_obj, **{'status': 3})
+
+
+from functools import wraps
+from time import time
+
+
+def timing(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        start = time()
+        f(*args, **kwargs)
+        end = time()
+        elapsed_time = round((end - start), 2)
+        print(elapsed_time)
+        print(args)
+    return wrapper
+
+
+@my_scheduler_run_now('date')
+@timing
+def test(cache_name, order_obj):
+    import time
+    time.sleep(3)
+    print('wake up')
