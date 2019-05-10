@@ -45,13 +45,15 @@ class UserProfileViewSet(mixins.ListModelMixin,
         """
         获取当前登陆的用户信息
         """
-        serializer = UserSerializer(self.request.user)
+        user = self.request.user
+        serializer = UserSerializer(user)
         uri = request.build_absolute_uri('/').strip("/")
         data = serializer.data
         data['avatar'] = uri + data['avatar'] if data['avatar'] else uri +'/media/avatar/plane.jpg'
         data['permissions'] = request.user.get_all_permissions()
         data['properties'] = json.loads(data['properties'])
-
+        data['is_superuser'] = user.is_superuser
+        data['is_devops'] = user.is_devops
         return Response(data)
 
 
