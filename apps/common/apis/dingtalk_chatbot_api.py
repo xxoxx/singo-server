@@ -34,6 +34,25 @@ class DingtalkChatbot(object):
 
         self.__post(data)
 
+    def send_link(self, title, text, message_url, pic_url='', msgtype='link',):
+        """
+        :param msgtype:     消息类型，此时固定为：link
+        :param title:       消息标题
+        :param text:        消息内容。如果太长只会部分展示
+        :param message_url: 点击消息跳转的URL
+        :param pic_url:     图片URL
+        :return:
+        """
+        data = {
+            "msgtype": msgtype,
+            "link": {
+                "text": text,
+                "title": title,
+                "messageUrl": message_url,
+                "picUrl": pic_url
+            }
+        }
+        self.__post(data)
 
     def __post(self, data):
         try:
@@ -42,8 +61,6 @@ class DingtalkChatbot(object):
                 raise Exception('钉钉机器人发送消息失败')
         except Exception as e:
             logger.exception(e)
-            logger.error(e)
-
 
 
 dingtalk_chatbot = DingtalkChatbot()

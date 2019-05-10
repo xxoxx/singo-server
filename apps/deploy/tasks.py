@@ -5,6 +5,7 @@ __datetime__ = '2019/4/28 9:57 PM '
 import time
 from django.core.cache import cache
 from functools import wraps
+from django.conf import settings
 
 from common.apscheduler import my_scheduler_run_now
 from common.apis import jenkins_api, dingtalk_chatbot
@@ -33,7 +34,7 @@ def jenkins_log(f, job_name, build_number, line_number):
 def set_step_cache(cache_name, deploy_cache, label):
     deploy_cache['current_step'] += 1
     deploy_cache['label'] = label
-    cache.set(cache_name, deploy_cache, timeout=3600)
+    cache.set(cache_name, deploy_cache, timeout=24*3600)
 
 def create_or_update_history(order_obj=None, deploy_cache=None, obj=None, **kwargs):
     try:
@@ -124,13 +125,21 @@ def download_package(f, cache_name, deploy_cache, order_obj):
 def timing(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        order_obj = args[1]
-        dingtalk_chatbot.text_msg('开始上线项目: {}'.format(order_obj.project.name))
+        try:
+            order_obj = args[1]
+            dingtalk_chatbot.text_msg('开始上线项目--> {}'.format(order_obj.project.name))
+            realtime_log_url = '{}/log.html?id={}'.format(settings.FRONT_END_URL, order_obj.id)
+            dingtalk_chatbot.send_link('上线实时日志', '点击查看日志', realtime_log_url)
+        except Exception as e:
+            logger.exception(e)
+
         start = time.time()
         f(*args, **kwargs)
         end = time.time()
+
         elapsed_time = round((end - start), 0)
-        dingtalk_chatbot.text_msg('{}已完成上线,耗时: {}'.format(order_obj.project.name, timedelta(seconds=elapsed_time)))
+
+        dingtalk_chatbot.text_msg('{}已完成上线,耗时-->{}'.format(order_obj.project.name, timedelta(seconds=elapsed_time)))
     return wrapper
 
 @my_scheduler_run_now('date')

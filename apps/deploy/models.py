@@ -7,7 +7,7 @@ from .common import *
 
 STATUS = (
     (UNREVIEWED, '待审核'),
-    (GOONLINE, '待上线'),
+    (STAY_ONLINE, '待上线'),
     (ONLINEING, '上线中'),
     (ONLINED, '已上线'),
     (REJECT, '未通过'),

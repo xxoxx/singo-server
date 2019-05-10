@@ -29,12 +29,23 @@ class DeploymentOrderViewSet(viewsets.ModelViewSet):
     queryset = DeploymentOrder.objects.all()
 
     def get_queryset(self):
+        order_status = self.request.query_params.get('order_status')
+
         if self.request.user.is_superuser or self.request.user.is_devops:
             return DeploymentOrder.objects.all()
+        elif order_status == 'going':
+            return DeploymentOrder.objects.filter((Q(applicant=self.request.user) |
+                                                  Q(reviewer=self.request.user) |
+                                                  Q(assign_to=self.request.user)) &
+                                                  (Q(status=UNREVIEWED) |
+                                                   Q(status=STAY_ONLINE) |
+                                                   Q(status=ONLINEING)))
         else:
             return DeploymentOrder.objects.filter(Q(applicant=self.request.user) |
                                                   Q(reviewer=self.request.user)  |
                                                   Q(assign_to=self.request.user))
+    # def list(self, request, *args, **kwargs):
+    #     super().list()
 
 class RollBackList(APIView):
     permission_classes = (permissions.IsAuthenticated,)
