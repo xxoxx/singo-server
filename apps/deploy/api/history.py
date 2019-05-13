@@ -24,8 +24,7 @@ class HistoryViewSet(mixins.ListModelMixin,
     queryset = History.objects.all()
 
 
-    @action(detail=True, methods=['get'], name='history-log',
-            url_path='log')
+    @action(detail=True, methods=['get'], name='history-log', url_path='log')
     def log(self, request, pk):
         try:
             obj = self.get_object()

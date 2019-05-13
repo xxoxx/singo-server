@@ -14,6 +14,7 @@ import os, time, linecache
 from common.utils import logger
 from common.permissions import DevopsPermission, DeployPermission
 from common.pagination import CustomPagination
+from rest_framework.decorators import action
 from ..serializers import DeploymentOrderSerializer
 from ..models import DeploymentOrder
 from ..filters import DeploymentOrderFilter
@@ -41,13 +42,19 @@ class DeployJob(APIView):
         if order_obj.type == ONLINE:
             # 启动jenkins构建
             # next_build_number = jenkins_api.get_next_build_number(jenkins_job_name)
-            next_build_number = 1
             # queue_id = jenkins_api.build_job(jenkins_job_name, parameters={'BRANCH': order_obj.branche})
-            queue_id = 2
-            steps = ['初始化','构建', '下载代码包']
+            next_build_number = 1
+            queue_id = 1
+            steps = ['initJob','build', 'downloadPackage']
         else:
-            history = History.objects.get()
-            steps = ['初始化', '下载代码包']
+            try:
+                history = History.objects.get(pk=order_obj.content)
+                next_build_number = history.jk_number
+                queue_id = -1
+            except:
+                raise Exception('获取回滚版本失败')
+
+            steps = ['initJob', 'downloadPackage']
 
         # 更加sls文件来获取步骤
         try:
@@ -69,8 +76,9 @@ class DeployJob(APIView):
                           'steps': steps
                   }
 
-
         cache.set(cache_name, deploy_cache, timeout=24*3600)
+
+        return next_build_number
 
     def post(self, request, pk, format=None):
         order_obj = self.get_object()
@@ -89,7 +97,7 @@ class DeployJob(APIView):
                 cache.set(cache_name, {'is_lock': True}, timeout=24*3600)
 
             # 初始化
-            self.__init_deploy(cache_name, order_obj)
+            jenkins_build_number = self.__init_deploy(cache_name, order_obj)
             #启动任务
             # start_job(cache_name, order_obj)
 
@@ -108,6 +116,7 @@ class DeployJob(APIView):
         return Response({
                             'project_name': order_obj.project.name,
                             'jenkins_job_name': jenkins_job_name,
+                            'jenkins_build_number': jenkins_build_number
                          })
 
     def get(self, request, pk, format=None):

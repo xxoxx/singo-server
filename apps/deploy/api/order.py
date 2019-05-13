@@ -46,10 +46,6 @@ class DeploymentOrderViewSet(viewsets.ModelViewSet):
                                                   Q(reviewer=self.request.user)  |
                                                   Q(assign_to=self.request.user))
 
-    def create(self, request, *args, **kwargs):
-        print(request.data)
-        return Response()
-
 
 class RollBackList(APIView):
     """
@@ -69,7 +65,6 @@ class RollBackList(APIView):
                         {
                             'content': h.id,
                             'title': order.title,
-                            'project': order.id,
                             'branche': order.branche,
                             'commit_id': order.commit_id,
                             'commit': order.commit
