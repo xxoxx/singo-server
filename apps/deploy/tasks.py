@@ -13,6 +13,7 @@ from common.utils import logger
 from .models import History
 from datetime import datetime, timedelta
 from .common import *
+from common.apis import saltapi
 
 
 
@@ -31,9 +32,8 @@ def jenkins_log(f, job_name, build_number, line_number):
     f.flush()
     return len(log)
 
-def set_step_cache(cache_name, deploy_cache, label):
+def set_step_cache(cache_name, deploy_cache):
     deploy_cache['current_step'] += 1
-    deploy_cache['label'] = label
     cache.set(cache_name, deploy_cache, timeout=24*3600)
 
 def create_or_update_history(order_obj=None, deploy_cache=None, obj=None, **kwargs):
@@ -67,6 +67,30 @@ def create_or_update_history(order_obj=None, deploy_cache=None, obj=None, **kwar
         logger.exception(e)
         logger.error(e)
 
+
+def deal_with_salt_ret(rets):
+    """
+    判断sls是否执行成功
+    :param rets:
+    :return: {'saltid':bool,...}
+    """
+    brief = {}
+
+    for ret in rets:
+        try:
+            for salt_id, contents in ret.items():
+                try:
+                    for content in contents.values():
+                        if content.get('result') and content.get('__id__') == 'finally':
+                            brief[salt_id] = True
+                            break
+                except:
+                    brief[salt_id] = False
+        except:
+            continue
+    return brief
+
+
 # 构建
 def build(f, cache_name, deploy_cache, history):
     logger.debug('开始构建项目')
@@ -74,7 +98,7 @@ def build(f, cache_name, deploy_cache, history):
     f.flush()
 
     line_number = 0
-    set_step_cache(cache_name, deploy_cache, '构建项目')
+    set_step_cache(cache_name, deploy_cache)
     job_name = deploy_cache['job_name']
     build_number = deploy_cache['build_number']
     queue_id = deploy_cache.get('queue_id')
@@ -116,18 +140,42 @@ def download_package(f, cache_name, deploy_cache, order_obj):
 
     build_number = deploy_cache['build_number']
 
-    set_step_cache(cache_name, deploy_cache, '下载代码')
+    set_step_cache(cache_name, deploy_cache)
     jenkins_api.download_package(order_obj.project.package_url,
                                  order_obj.project.jenkins_job,
                                  build_number)
 
+# 执行sls文件
+def deploy_state_sls(f, order_obj):
+    logger.debug('开始执行salt SLS')
+    f.write('> 开始执行salt SLS\n')
+    f.flush()
+
+    salt_id = [s.saltID for s in order_obj.project.servers.all()]
+
+    rets = saltapi.state_sls(salt_id, **{
+        'mods': order_obj.project.name,
+        'saltenv': 'deploy'
+    })
+    f.write(str(rets))
+    f.flush()
+
+    rets = rets.get('return', [])
+    brief = deal_with_salt_ret(rets)
+
+    for s in salt_id:
+        if brief.get(s, 'default') == 'default':
+            brief[s] = False
+
+    if len([k for k, v in brief.items() if v == False]) > 0 :
+        raise Exception('存在执行SLS失败的主机')
 
 def timing(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         try:
             order_obj = args[1]
-            dingtalk_chatbot.text_msg('开始上线项目--> {}'.format(order_obj.project.name))
+            dingtalk_chatbot.text_msg('开始上线项目 {}'.format(order_obj.project.name))
             realtime_log_url = '{}/log.html?id={}'.format(settings.FRONT_END_URL, order_obj.id)
             dingtalk_chatbot.send_link('上线实时日志', '点击查看日志', realtime_log_url)
         except Exception as e:
@@ -139,7 +187,7 @@ def timing(f):
 
         elapsed_time = round((end - start), 0)
 
-        dingtalk_chatbot.text_msg('{}已完成上线,耗时-->{}'.format(order_obj.project.name, timedelta(seconds=elapsed_time)))
+        dingtalk_chatbot.text_msg('{}已完成上线,耗时 {}'.format(order_obj.project.name, timedelta(seconds=elapsed_time)))
     return wrapper
 
 @my_scheduler_run_now('date')
@@ -158,87 +206,27 @@ def start_job(cache_name, order_obj):
 
         ###################下载代码##################
         download_package(f, cache_name, deploy_cache, order_obj)
+
+        ##################执行SLS文件################
+        deploy_state_sls(f, order_obj)
+
+        ##################完成发布################
+        print(deploy_cache)
+        print(order_obj.title)
+
+        create_or_update_history(obj=history, **{'result': SUCCESSFUL, 'end': datetime.now()})
+        save_order_obj(order_obj, **{'status': ONLINED})
+
     except Exception as e:
         logger.exception(e)
-        save_order_obj(order_obj, **{'result': str(e), 'status': 5})
+        save_order_obj(order_obj, **{'result': str(e), 'status': FAIL})
         kwargs = {
             'result': FAILED,
-            'error': str(e),
+            'error_msg': str(e),
             'end': datetime.now()
         }
         create_or_update_history(obj=history, **kwargs)
         return False
-
-
-    ############jenkins##############
-    # 最多等待jenkins15分
-    # try:
-    #     line_number = 0
-    #     set_step_cache(cache_name, deploy_cache, '构建项目')
-    #     logger.debug('开始构建项目')
-    #     f.write('> 开始构建项目\n')
-    #     f.flush()
-    #     build_info = {}
-    #
-    #     for i in range(180):
-    #         time.sleep(5)
-    #         build_info = jenkins_api.get_build_info(job_name, build_number)
-    #
-    #         if build_info and queue_id != build_info.get('queueId'):
-    #             raise Exception('获取jenkins build number 失败')
-    #         # 构建中
-    #         elif build_info and build_info.get('building') == True:
-    #             logger.debug('构建中')
-    #             # 获取jenkins日志
-    #             line_number = jenkins_log(f, job_name, build_number, line_number)
-    #             continue
-    #         elif build_info and build_info.get('building') == False and build_info.get('result') == 'SUCCESS':
-    #             logger.debug('构建完成')
-    #             jenkins_log(f, job_name, build_number, line_number)
-    #             create_or_update_history(obj=history, **{'jk_result': build_info.get('result')})
-    #             break
-    #         elif build_info and build_info.get('building') == False and build_info.get('result') != 'SUCCESS':
-    #             logger.debug('构建失败')
-    #             jenkins_log(f, job_name, build_number, line_number)
-    #             raise Exception('构建失败')
-    #         else:
-    #             logger.debug('等待jenkins创建任务')
-    # except Exception as e:
-    #     logger.exception(e)
-    #     save_order_obj(order_obj, str(e))
-    #     kwargs = {
-    #         'result': 1,
-    #         'jk_result': build_info.get('result'),
-    #         'error': str(e),
-    #         'end': datetime.now()
-    #     }
-    #     create_or_update_history(obj=history, **kwargs)
-    #     return False
-
-    ############获取jenkins构建包##############
-
-    # try:
-    #     logger.debug('开始下载代码')
-    #     f.write('> 开始下载代码\n')
-    #     f.flush()
-    #
-    #     set_step_cache(cache_name, deploy_cache, '下载代码')
-    #     jenkins_api.download_package(order_obj.project.package_url,
-    #                                  order_obj.project.jenkins_job,
-    #                                  build_number)
-    # except Exception as e:
-    #     logger.exception(e)
-    #     save_order_obj(order_obj, str(e))
-    #     create_or_update_history(obj=history, **{'result': 1, 'error': str(e)})
-    #     return False
-
-    ############执行salt SLS##############
-
-    print(deploy_cache)
-    print(order_obj.title)
-
-    create_or_update_history(obj=history, **{'result': 0, 'end': datetime.now()})
-    save_order_obj(order_obj, **{'status': 3})
 
 
 # def timing(*args, **kwargs):
@@ -250,11 +238,3 @@ def start_job(cache_name, order_obj):
 #             elapsed_time = round((end - start), 2)
 #         return inner
 #     return wrapper
-
-
-@my_scheduler_run_now('date')
-@timing
-def test(cache_name, order_obj):
-    import time
-    time.sleep(3)
-    print('wake up')

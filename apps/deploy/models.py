@@ -61,7 +61,7 @@ class DeploymentOrder(models.Model):
     type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='类型')
     env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
     branche = models.CharField(max_length=64, blank=False, null=False, verbose_name='分支')
-    commit_id = models.CharField(max_length=32, blank=False, null=False, verbose_name='commit id')
+    commit_id = models.CharField(max_length=64, blank=False, null=False, unique=True, verbose_name='commit id')
     commit = models.CharField(max_length=256, blank=False, null=False, verbose_name='git commit')
     content = models.TextField(max_length=512, blank=True, null=True, verbose_name='上线描述及影响')
     applicant = models.ForeignKey(User, blank=False, null=False, related_name='dmo_applicant', verbose_name='申请人')
@@ -117,4 +117,4 @@ class History(models.Model):
         verbose_name = '历史记录'
         verbose_name_plural = verbose_name
         ordering = ['-id']
-        unique_together = ('order_id', 'deploy_times')
+        # unique_together = ('commit_id', 'deploy_times')

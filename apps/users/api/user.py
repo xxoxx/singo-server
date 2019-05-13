@@ -52,7 +52,6 @@ class UserProfileViewSet(mixins.ListModelMixin,
         data['avatar'] = uri + data['avatar'] if data['avatar'] else uri +'/media/avatar/plane.jpg'
         data['permissions'] = request.user.get_all_permissions()
         data['properties'] = json.loads(data['properties'])
-        data['is_superuser'] = user.is_superuser
         data['is_devops'] = user.is_devops
         return Response(data)
 

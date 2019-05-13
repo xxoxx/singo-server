@@ -152,24 +152,98 @@
  'url': 'queue/item/3261/',
  'why': 'In the quiet period. Expires in 4.9 sec', 'timestamp': 1556504398599}
 
-# import jenkins
-# from requests.exceptions import ConnectionError
-#
-#
-#
-# try:
-#     server = jenkins.Jenkins("http://cainanjie:119c8e97980559a91210458a8a9e8864f31@ci.ops.com")
-#
-#     # print(server.get_all_jobs())
-# except ConnectionError:
-#     print('无法连接jenkins')
-# except jenkins.JenkinsException:
-#     print('====')
+
+{'return': [
+    {'devops':
+         {'service_|-web_service_|-httpd_|-running':
+              {'comment': 'The service httpd is already running',
+               'name': 'httpd',
+               'start_time': '11:23:09.220637',
+               'result': True,
+               'duration': 648.946,
+               '__run_num__': 2,
+               '__sls__': 'devops-server',
+               'changes': {},
+               '__id__': 'web_service'
+               },
+          'http_|-alert_code_|-http://127.0.0.1:8418/api/deploy/v1/test/?step=3&desc=部署代码_|-query':
+              {'comment': 'Status 200 was not found, as specified.',
+               'name': 'http://127.0.0.1:8418/api/deploy/v1/test/?step=3&desc=部署代码',
+               'data': {'status': 599, 'error': 'HTTP 599: Stream closed'},
+               'start_time': '11:23:00.812946',
+               'result': False,
+               'duration': 3126.614,
+               '__run_num__': 1,
+               '__sls__': 'devops-server',
+               'changes': {}, '__id__': 'alert_code'},
+          'file_|-lemon_|-/opt/devops/edi-express-1.3.0.war_|-managed':
+              {'comment': 'File /opt/devops/edi-express-1.3.0.war is in the correct state',
+               'pchanges': {}, 'name': '/opt/devops/edi-express-1.3.0.war',
+               'start_time': '11:22:58.346745', 'result': True,
+               'duration': 2457.365, '__run_num__': 0,
+               '__sls__': 'devops-server',
+               'changes': {}, '__id__': 'lemon'},
+          'http_|-alert_web_|-http://127.0.0.1:8418/api/deploy/v1/test/?step=3&desc=重启服务_|-query':
+              {'comment': 'Status 200 was found, as specified.',
+               'name': 'http://127.0.0.1:8418/api/deploy/v1/test/?step=3&desc=重启服务',
+               'data': {'body': '"lemon1912"', 'status': 200, 'text': '"lemon1912"'},
+               'start_time': '11:23:09.879562', 'result': True, 'duration': 725.709,
+               '__run_num__': 3, '__sls__': 'devops-server', 'changes': {}, '__id__': 'alert_web'}}}]}
+
+{'return': [
+    {'devops':
+         {'http_|-alert_code_|-http://127.0.0.1:8418/api/deploy/v1/test/?desc=deploy%20code_|-query':
+              {'comment': 'Status 200 was found, as specified.',
+               'name': 'http://127.0.0.1:8418/api/deploy/v1/test/?desc=deploy%20code',
+               'data': {'body': '"lemon1912"', 'status': 200, 'text': '"lemon1912"'},
+               'start_time': '13:54:35.890604',
+               'result': True,
+               'duration': 1116.235,
+               '__run_num__': 1,
+               '__sls__': 'devops-server',
+               'changes': {},
+               '__id__': 'alert_code'},
+          'service_|-web_service_|-httpd_|-running':
+              {'comment': 'The service httpd is already running',
+               'name': 'httpd',
+               'start_time': '13:54:40.915280',
+               'result': True,
+               'duration': 1076.993,
+               '__run_num__': 2,
+               '__sls__': 'devops-server',
+               'changes': {},
+               '__id__': 'web_service'},
+          'file_|-lemon_|-/opt/devops/edi-express-1.3.0.war_|-managed':
+              {'comment': 'File /opt/devops/edi-express-1.3.0.war is in the correct state',
+               'pchanges': {},
+               'name': '/opt/devops/edi-express-1.3.0.war',
+               'start_time': '13:54:33.269158',
+               'result': True, 'duration': 2613.85,
+               '__run_num__': 0,
+               '__sls__': 'devops-server',
+               'changes': {},
+               '__id__': 'lemon'},
+          'http_|-alert_web_|-http://127.0.0.1:8418/api/deploy/v1/test/?desc=restart%20service_|-query':
+              {'comment': 'Status 200 was found, as specified.',
+               'name': 'http://127.0.0.1:8418/api/deploy/v1/test/?desc=restart%20service',
+               'data': {'body': '"lemon1912"', 'status': 200, 'text': '"lemon1912"'},
+               'start_time': '13:54:42.076338',
+               'result': True,
+               'duration': 2303.52,
+               '__run_num__': 3,
+               '__sls__': 'devops-server',
+               'changes': {},
+               '__id__': 'alert_web'}}}]}
+
+
+b = ['11111111', 'devops']
+
+rets = {'return': [{'11111111': 'Minion did not return. [No response]', 'devops': {"cmd_|-finally_|-echo 'successful'_|-run": {'comment': 'Command "echo \'successful\'" run', 'name': "echo 'successful'", 'start_time': '14:24:20.220398', 'result': True, 'duration': 124.941, '__run_num__': 4, '__sls__': 'devops-server', 'changes': {'pid': 21304, 'retcode': 0, 'stderr': '', 'stdout': 'successful'}, '__id__': 'finally'}, 'http_|-alert_code_|-http://127.0.0.1:8418/api/deploy/v1/test/?desc=deploy%20code_|-query': {'comment': 'Status 200 was found, as specified.', 'name': 'http://127.0.0.1:8418/api/deploy/v1/test/?desc=deploy%20code', 'data': {'body': '"lemon1912"', 'status': 200, 'text': '"lemon1912"'}, 'start_time': '14:24:10.013060', 'result': True, 'duration': 1073.613, '__run_num__': 1, '__sls__': 'devops-server', 'changes': {}, '__id__': 'alert_code'}, 'service_|-web_service_|-httpd_|-running': {'comment': 'The service httpd is already running', 'name': 'httpd', 'start_time': '14:24:15.073027', 'result': True, 'duration': 3978.007, '__run_num__': 2, '__sls__': 'devops-server', 'changes': {}, '__id__': 'web_service'}, 'file_|-lemon_|-/opt/devops/edi-express-1.3.0.war_|-managed': {'comment': 'File /opt/devops/edi-express-1.3.0.war is in the correct state', 'pchanges': {}, 'name': '/opt/devops/edi-express-1.3.0.war', 'start_time': '14:24:07.975151', 'result': True, 'duration': 2030.403, '__run_num__': 0, '__sls__': 'devops-server', 'changes': {}, '__id__': 'lemon'}, 'http_|-alert_web_|-http://127.0.0.1:8418/api/deploy/v1/test/?desc=restart%20service_|-query': {'comment': 'Status 200 was found, as specified.', 'name': 'http://127.0.0.1:8418/api/deploy/v1/test/?desc=restart%20service', 'data': {'body': '"lemon1912"', 'status': 200, 'text': '"lemon1912"'}, 'start_time': '14:24:19.065818', 'result': True, 'duration': 999.857, '__run_num__': 3, '__sls__': 'devops-server', 'changes': {}, '__id__': 'alert_web'}}}]}
+rets = rets.get('return')
+
+import json
+print('''{}'''.format(rets))
 
 
 
-try:
-    raise Exception('赵永强曹尼玛')
-except Exception as e:
-    print(e)
 

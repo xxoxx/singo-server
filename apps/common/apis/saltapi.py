@@ -6,11 +6,12 @@ from common.utils import logger
 from django.core.cache import cache
 from common.utils import Bcolor
 
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class SaltAPI(object):
-    def __init__(self, url, username, password, timeout=30):
+    def __init__(self, url, username, password, timeout=600):
         self.__url = url
         self.__username = username
         self.__password = password
@@ -45,8 +46,12 @@ class SaltAPI(object):
             self.get_token()
             headers['X-Auth-Token'] = self.__token
 
-        req = requests.post(url, headers=headers,
+        try:
+            req = requests.post(url, headers=headers,
                             data=data, json=json, verify=False, timeout=self.__timeout)
+        except Exception as e:
+            logger.exception(e)
+            return None
         return req
 
     def get_token(self, prefix='/login'):
@@ -294,27 +299,44 @@ class SaltAPI(object):
         异步执行state模块
         """
 
-        # data = {'client': 'local', 'tgt': '*',
-        #         'fun': 'state.sls',
-        #         'kwarg': {'pillar':
-        #                       {'foo': 'Foo123!'},
-        #                        'mods': 'test.shell',
-        #                        'saltenv': 'dev'
-        #                   }
-        #         }
+        data = {
+                'client': 'local', 'tgt': '*',
+                'fun': 'state.sls',
+                'kwarg': {'pillar':
+                              {'foo': 'Foo123!'},
+                               'mods': 'test.shell',
+                               'saltenv': 'dev'
+                          }
+                }
+
         #
         # 'Content-type': 'application/json'
 
-        data = {'client': 'local', 'tgt': ['devops'],
-                'fun': 'state.sls', 'arg': ['test.shell',
-                                            "pillar={'foo':'Foo123!'}",
-                                            "saltenv=dev"]
-                }
-        ret = self.post(data=data)
+        # data = {'client': 'local', 'tgt': ['devops'],
+        #         'fun': 'state.sls', 'arg': ['test.shell',
+        #                                     "pillar={'foo':'Foo123!'}",
+        #                                     "saltenv=dev"]
+        #         }
+        ret = self.post(json=data)
         print('==========')
         print(ret.json())
         return ret
 
+    def state_sls(self, tgt, client='local', expr_form='list', **kwarg):
+        data = {
+                'client': client,
+                'tgt': tgt,
+                'fun': 'state.sls',
+                'expr_form': expr_form,
+                'kwarg': kwarg
+                }
+
+        ret = self.post(json=data)
+        if ret:
+            logger.debug(ret.json())
+            return ret.json()
+        else:
+            return {'return': [{}]}
 
 try:
     saltapi = None

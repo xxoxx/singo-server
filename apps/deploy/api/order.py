@@ -13,7 +13,7 @@ from common.permissions import DevopsPermission, DeployPermission
 from common.pagination import CustomPagination
 from ..serializers import DeploymentOrderSerializer
 from ..filters import DeploymentOrderFilter
-from ..models import DeploymentOrder
+from ..models import DeploymentOrder, History
 from ..common import *
 
 
@@ -33,6 +33,7 @@ class DeploymentOrderViewSet(viewsets.ModelViewSet):
 
         if self.request.user.is_superuser or self.request.user.is_devops:
             return DeploymentOrder.objects.all()
+        # 返回进行中的上线单
         elif order_status == 'going':
             return DeploymentOrder.objects.filter((Q(applicant=self.request.user) |
                                                   Q(reviewer=self.request.user) |
@@ -44,26 +45,40 @@ class DeploymentOrderViewSet(viewsets.ModelViewSet):
             return DeploymentOrder.objects.filter(Q(applicant=self.request.user) |
                                                   Q(reviewer=self.request.user)  |
                                                   Q(assign_to=self.request.user))
-    # def list(self, request, *args, **kwargs):
-    #     super().list()
+
+    def create(self, request, *args, **kwargs):
+        print(request.data)
+        return Response()
+
 
 class RollBackList(APIView):
+    """
+    获取回滚列表
+    """
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request, project_name, format=None):
         try:
             size = settings.DEPLOY.get('ROLLBACK_SIZE', 1)
-            orders = DeploymentOrder.objects.filter(project__name=project_name, status=ONLINED)[0:size]
-            data = [{
-                        'title': order.title,
-                        'branche':order.branche,
-                        'commit_id': order.commit_id,
-                        'commit': order.commit
-                     }
-                    for order in orders]
+            orders = DeploymentOrder.objects.filter(project__name=project_name, status=ONLINED, type=ONLINE)[0:size]
+            data = []
+            for order in orders:
+                try:
+                    h = History.objects.get(order_id=order.id, deploy_times=order.deploy_times)
+                    data.append(
+                        {
+                            'content': h.id,
+                            'title': order.title,
+                            'project': order.id,
+                            'branche': order.branche,
+                            'commit_id': order.commit_id,
+                            'commit': order.commit
+                        }
+                    )
+                except:
+                    continue
 
             return Response(data)
         except Exception as e:
             logger.exception(e)
-            logger.error(e)
             return Response(status=status.HTTP_400_BAD_REQUEST)
