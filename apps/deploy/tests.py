@@ -241,9 +241,15 @@ b = ['11111111', 'devops']
 rets = {'return': [{'11111111': 'Minion did not return. [No response]', 'devops': {"cmd_|-finally_|-echo 'successful'_|-run": {'comment': 'Command "echo \'successful\'" run', 'name': "echo 'successful'", 'start_time': '14:24:20.220398', 'result': True, 'duration': 124.941, '__run_num__': 4, '__sls__': 'devops-server', 'changes': {'pid': 21304, 'retcode': 0, 'stderr': '', 'stdout': 'successful'}, '__id__': 'finally'}, 'http_|-alert_code_|-http://127.0.0.1:8418/api/deploy/v1/test/?desc=deploy%20code_|-query': {'comment': 'Status 200 was found, as specified.', 'name': 'http://127.0.0.1:8418/api/deploy/v1/test/?desc=deploy%20code', 'data': {'body': '"lemon1912"', 'status': 200, 'text': '"lemon1912"'}, 'start_time': '14:24:10.013060', 'result': True, 'duration': 1073.613, '__run_num__': 1, '__sls__': 'devops-server', 'changes': {}, '__id__': 'alert_code'}, 'service_|-web_service_|-httpd_|-running': {'comment': 'The service httpd is already running', 'name': 'httpd', 'start_time': '14:24:15.073027', 'result': True, 'duration': 3978.007, '__run_num__': 2, '__sls__': 'devops-server', 'changes': {}, '__id__': 'web_service'}, 'file_|-lemon_|-/opt/devops/edi-express-1.3.0.war_|-managed': {'comment': 'File /opt/devops/edi-express-1.3.0.war is in the correct state', 'pchanges': {}, 'name': '/opt/devops/edi-express-1.3.0.war', 'start_time': '14:24:07.975151', 'result': True, 'duration': 2030.403, '__run_num__': 0, '__sls__': 'devops-server', 'changes': {}, '__id__': 'lemon'}, 'http_|-alert_web_|-http://127.0.0.1:8418/api/deploy/v1/test/?desc=restart%20service_|-query': {'comment': 'Status 200 was found, as specified.', 'name': 'http://127.0.0.1:8418/api/deploy/v1/test/?desc=restart%20service', 'data': {'body': '"lemon1912"', 'status': 200, 'text': '"lemon1912"'}, 'start_time': '14:24:19.065818', 'result': True, 'duration': 999.857, '__run_num__': 3, '__sls__': 'devops-server', 'changes': {}, '__id__': 'alert_web'}}}]}
 rets = rets.get('return')
 
-import json
-print('''{}'''.format(rets))
 
 
 
 
+# import requests
+# session = requests.Session()
+#
+#
+# data =  {'os_username': 'singo', 'os_password': 'nj532680'}
+# url = 'http://doc.ops.com/login.action'
+# r = session.post(url, data=data)
+# print(session.cookies)

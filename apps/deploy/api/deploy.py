@@ -12,7 +12,7 @@ import os, time, linecache
 
 
 from common.utils import logger
-from common.permissions import DevopsPermission, DeployPermission
+from common.permissions import DevopsPermission, DeployPermission, IsDevopsPermission
 from common.pagination import CustomPagination
 from rest_framework.decorators import action
 from ..serializers import DeploymentOrderSerializer
@@ -99,7 +99,7 @@ class DeployJob(APIView):
             # 初始化
             jenkins_build_number = self.__init_deploy(cache_name, order_obj)
             #启动任务
-            # start_job(cache_name, order_obj)
+            # start_job(cache_name, order_obj, request.user.name)
 
             # 上线中
             order_obj.status = ONLINEING
@@ -120,9 +120,25 @@ class DeployJob(APIView):
                          })
 
     def get(self, request, pk, format=None):
+        print(pk)
         data = cache.get('deploy-devops-server')
         cache.delete('deploy-devops-server')
         return Response(data)
+
+
+class RedeployJob(DeployJob):
+    """
+    重新上线
+    """
+    permission_classes = (permissions.IsAuthenticated, IsDevopsPermission)
+
+    def post(self, request, pk, format=None):
+        order_obj = self.get_object()
+        if order_obj.status == ONLINED or order_obj.status == FAIL:
+            pass
+        return Response('OK')
+
+
 
 class DeployRealtimeLog(APIView):
     permission_classes = (permissions.AllowAny,)

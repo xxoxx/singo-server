@@ -67,7 +67,8 @@ class RollBackList(APIView):
                             'title': order.title,
                             'branche': order.branche,
                             'commit_id': order.commit_id,
-                            'commit': order.commit
+                            'commit': order.commit,
+                            'env': order.env
                         }
                     )
                 except:

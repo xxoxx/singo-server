@@ -41,7 +41,6 @@ class DevopsPermission(permissions.BasePermission):
         perms = self.get_required_permissions(request.method, app_label, view.perms_map)
         return request.user.has_perms(perms)
 
-
 # 发布权限
 class DeployPermission(permissions.BasePermission):
     message = '你没有执行发布的权限'
@@ -52,3 +51,8 @@ class DeployPermission(permissions.BasePermission):
             return True
         else:
             return False
+
+# 是运维返回True
+class IsDevopsPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_devops or request.user.is_superuser

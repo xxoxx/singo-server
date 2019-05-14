@@ -192,7 +192,7 @@ def timing(f):
 
 @my_scheduler_run_now('date')
 @timing
-def start_job(cache_name, order_obj):
+def start_job(cache_name, order_obj, assign_to):
     try:
         # 设置第几次执行上线单
         order_obj.deploy_times += 1
