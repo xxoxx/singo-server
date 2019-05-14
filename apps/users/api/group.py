@@ -48,7 +48,7 @@ class UserGroupleViewSet(viewsets.ModelViewSet):
         获取运维组成员
         '''
         try:
-            group = UserGroup.objects.get(name='运维组')
+            group = UserGroup.objects.get(name='devops')
             members = group.members.all()
             serializer = UserSerializer(members, many=True)
         except Exception as e:

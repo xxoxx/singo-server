@@ -2,7 +2,7 @@ __author__ = 'Singo'
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from .group import UserGroup
+from django.contrib.auth.models import User
 import uuid
 import json
 
@@ -54,7 +54,7 @@ class User(AbstractUser):
     # 判断是不是运维人员
     @property
     def is_devops(self):
-        return bool(self.family.filter(name='devops'))
+        return self.groups.filter(name='devops').exists()
 
     class Meta:
         verbose_name = '用户'
