@@ -11,7 +11,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class SaltAPI(object):
-    def __init__(self, url, username, password, timeout=600):
+    def __init__(self, url, username, password, timeout=1800):
         self.__url = url
         self.__username = username
         self.__password = password
@@ -45,14 +45,7 @@ class SaltAPI(object):
         if not self.__token_expire > time.time():
             self.get_token()
             headers['X-Auth-Token'] = self.__token
-
-        try:
-            req = requests.post(url, headers=headers,
-                            data=data, json=json, verify=False, timeout=self.__timeout)
-        except Exception as e:
-            logger.exception(e)
-            return None
-        return req
+        return requests.post(url, headers=headers, data=data, json=json, verify=False, timeout=self.__timeout)
 
     def get_token(self, prefix='/login'):
         '''
@@ -104,13 +97,8 @@ class SaltAPI(object):
 
         url = '{}{}'.format(self.__url, prefix)
 
-        try:
-            req = requests.get(url, params=data, headers=headers, verify=False, timeout=self.__timeout)
-        except Exception as e:
-            logger.error('连接salt api失败')
-            logger.error(e)
-            raise e
-        return req
+        return requests.get(url, params=data, headers=headers, verify=False, timeout=self.__timeout)
+
     #--------------------------key-------------------------------
     def key_list(self):
         data = {

@@ -38,9 +38,9 @@ class DeploymentOrderViewSet(viewsets.ModelViewSet):
             return DeploymentOrder.objects.filter((Q(applicant=self.request.user) |
                                                   Q(reviewer=self.request.user) |
                                                   Q(assign_to=self.request.user)) &
-                                                  (Q(status=UNREVIEWED) |
-                                                   Q(status=STAY_ONLINE) |
-                                                   Q(status=ONLINEING)))
+                                                  (Q(status=D_UNREVIEWED) |
+                                                   Q(status=D_PENDING) |
+                                                   Q(status=D_RUNNING)))
         else:
             return DeploymentOrder.objects.filter(Q(applicant=self.request.user) |
                                                   Q(reviewer=self.request.user)  |
@@ -56,7 +56,7 @@ class RollBackList(APIView):
     def get(self, request, project_name, format=None):
         try:
             size = settings.DEPLOY.get('ROLLBACK_SIZE', 1)
-            orders = DeploymentOrder.objects.filter(project__name=project_name, status=ONLINED, type=ONLINE)[0:size]
+            orders = DeploymentOrder.objects.filter(project__name=project_name, status=D_SUCCESSFUL, type=ONLINE)[0:size]
             data = []
             for order in orders:
                 try:

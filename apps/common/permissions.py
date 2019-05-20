@@ -47,12 +47,10 @@ class DeployPermission(permissions.BasePermission):
 
     # 超级用户、运维、执行人拥有此权限
     def has_object_permission(self, request, view, obj):
-        if request.user.is_superuser or request.user.is_devops or obj.assign_to == request.user:
-            return True
-        else:
-            return False
+        return request.user.is_superuser or request.user.is_devops or (obj.assign_to == request.user)
 
 # 是运维返回True
 class IsDevopsPermission(permissions.BasePermission):
+    message = '只要运维人员才拥有此权限'
     def has_permission(self, request, view):
         return request.user.is_devops or request.user.is_superuser

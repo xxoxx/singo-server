@@ -5,6 +5,7 @@ import requests
 import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 
 from common.tasks import send_mail_async
 
@@ -128,3 +129,18 @@ def send_mail_common(subject, message, recipient_list):
         logger.error('配置文件DEBUG,或者EMAIL_FROM值缺失')
     except Exception as e:
         logger.error('发送邮件失败:', e)
+
+
+def update_cache_value(cache_name, old_val=None, timeout=24*3600, **kwargs):
+    try:
+        old_val = old_val or cache.get(cache_name)
+        old_val.update(kwargs)
+        cache.set(cache_name, old_val, timeout=timeout)
+        return old_val
+    except Exception as e:
+        logger.exception(e)
+        return False
+
+def update_obj(order_obj, **kwargs):
+    order_obj.__dict__.update(**kwargs)
+    order_obj.save()

@@ -6,18 +6,18 @@ from resources.models import Server
 from .common import *
 
 STATUS = (
-    (UNREVIEWED, '待审核'),
-    (STAY_ONLINE, '待上线'),
-    (ONLINEING, '上线中'),
-    (ONLINED, '已上线'),
-    (REJECT, '未通过'),
-    (FAIL, '上线失败')
+    (D_UNREVIEWED, '待审核'),
+    (D_PENDING, '待执行'),
+    (D_RUNNING, '运行中'),
+    (D_SUCCESSFUL, '成功'),
+    (D_REJECTED, '拒绝'),
+    (D_FAILED, '失败')
 )
 
 ENV = (
-    (PRO, '生产'),
-    (PRE, '预发布'),
-    (TEST, '测试')
+    (PRO, '生产环境'),
+    (PRE, '预发布环境'),
+    (TEST, '测试环境')
 )
 
 TYPE = (
@@ -57,19 +57,19 @@ class DeploymentOrder(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     title = models.CharField(max_length=128, blank=False, null=False, verbose_name='标题')
     project = models.ForeignKey(Project, blank=False, null=False, related_name='order', verbose_name='项目')
-    # 上线或者回滚
     type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='类型')
     env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
     branche = models.CharField(max_length=64, blank=False, null=False, verbose_name='分支')
-    commit_id = models.CharField(max_length=64, blank=False, null=False, unique=True, verbose_name='commit id')
+    commit_id = models.CharField(max_length=64, blank=False, null=False, verbose_name='commit id')
     commit = models.CharField(max_length=256, blank=False, null=False, verbose_name='git commit')
     content = models.TextField(max_length=512, blank=True, null=True, verbose_name='上线描述及影响')
     applicant = models.ForeignKey(User, blank=False, null=False, related_name='dmo_applicant', verbose_name='申请人')
     reviewer = models.ForeignKey(User, blank=False, null=False, related_name='dmo_reviewer', verbose_name='审核人')
     assign_to = models.ForeignKey(User, null=False, blank=False, related_name='dmo_assigned', verbose_name='上线人')
     apply_time = models.DateTimeField(auto_now_add=True, verbose_name='申请时间')
-    status = models.IntegerField(choices=STATUS, default=UNREVIEWED, verbose_name='状态')
-    result = models.TextField(max_length=512, blank=True, verbose_name='结果')
+    complete_time = models.DateTimeField(null=True, verbose_name='结束时间')
+    status = models.IntegerField(choices=STATUS, default=D_UNREVIEWED, verbose_name='状态')
+    result_msg = models.TextField(blank=True, verbose_name='结果')
     deploy_times = models.IntegerField(default=0, verbose_name='部署次数')
 
     def __str__(self):
@@ -81,10 +81,10 @@ class DeploymentOrder(models.Model):
         ordering = ['-apply_time']
 
 HISTORY_STATUS = (
-    (SUCCESSFUL, '成功'),
-    (FAILED, '失败'),
-    (CANCELED, '取消'),
-    (UNKNOWN, '未知')
+    (H_UNKNOWN, '未知'),
+    (H_CANCELED, '取消'),
+    (H_SUCCESSFUL, '成功'),
+    (H_FAILED, '失败')
 )
 
 class History(models.Model):
@@ -93,7 +93,7 @@ class History(models.Model):
     title = models.CharField(max_length=128, verbose_name='标题')
     project_name = models.CharField(max_length=64, verbose_name='项目名')
     env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
-    type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='动作')
+    type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='类型')
     servers_ip = models.TextField(verbose_name='部署服务器IP')
     servers_saltID = models.TextField(verbose_name='部署服务器saltID')
     branche = models.CharField(max_length=64, verbose_name='分支')
@@ -104,7 +104,7 @@ class History(models.Model):
     applicant = models.CharField(max_length=32, verbose_name='申请人')
     reviewer = models.CharField(max_length=32, verbose_name='审核人')
     assign_to = models.CharField(max_length=32, verbose_name='上线人')
-    result = models.IntegerField(choices=HISTORY_STATUS, default=UNKNOWN, verbose_name='状态')
+    result = models.IntegerField(choices=HISTORY_STATUS, default=H_UNKNOWN, verbose_name='状态')
     start = models.DateTimeField(auto_now_add=True, verbose_name='开始时间')
     end = models.DateTimeField(null=True, verbose_name='结束时间')
     log_file = models.CharField(max_length=128, verbose_name='部署日志')
@@ -117,4 +117,4 @@ class History(models.Model):
         verbose_name = '历史记录'
         verbose_name_plural = verbose_name
         ordering = ['-id']
-        # unique_together = ('commit_id', 'deploy_times')
+        unique_together = ('order_id', 'deploy_times')

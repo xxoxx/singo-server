@@ -2,6 +2,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events
 import logging
 from datetime import datetime
+import time
+from django.core.cache import cache
 
 logger = logging.getLogger('devops')
 
@@ -32,10 +34,11 @@ except Exception as e:
 
 
 # 使用 django_apscheduler 调用此方法会导致无限循环
+# def scheduler_run_now(scheduler, *args, **kwargs):
+# @scheduler_run_now(scheduler, 'date')
 def scheduler_run_now(scheduler, *args, **kwargs):
     def wrapper(func):
         def inner(*a, **k):
-            # kwargs.setdefault("id", "{}.{}".format(func.__module__, func.__name__))
             scheduler.add_job(func, *args, **kwargs, run_date=datetime.now(), args=a, kwargs=k)
         return inner
     return wrapper
@@ -44,8 +47,9 @@ def scheduler_run_now(scheduler, *args, **kwargs):
 def my_scheduler_run_now(*args, **kwargs):
     def wrapper(func):
         def inner(*a, **k):
-            scheduler.add_job(func, *args, **kwargs, run_date=datetime.now(), args=a, kwargs=k)
+            job_id = str(hash(time.time()))
+            # cache.set('{}.{}'.format(func.__module__, func.__name__), job_id, timeout=60)
+            k['job_id'] = job_id
+            scheduler.add_job(func, id=job_id, run_date=datetime.now(), args=a, kwargs=k, *args, **kwargs)
         return inner
     return wrapper
-
-
