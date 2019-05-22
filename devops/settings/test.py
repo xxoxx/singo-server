@@ -136,3 +136,27 @@ SQLAUDIT = {
     'USERNAME': 'dba',
     'PASSWORD': 'dba'
 }
+
+GITLABS = [
+    {
+        'URL': 'http://git.ops.com',
+        'TOKEN': 'gsdU_1zEq5Cmoq3seGSF'
+    }
+]
+
+JENKINS = {
+    'URL': 'http://jenkins.it',
+    'USER': 'zhoujinliang',
+    'TOKEN': '117c911a35acf51e428e29f3ccb363f53f',
+    'URI': 'http://{}:{}@jenkins.it'.format('zhoujinliang', '117c911a35acf51e428e29f3ccb363f53f')
+}
+
+DEPLOY = {
+    'CODE_PATH': '/srv/salt/deploy/',
+    'M_MINION': 'hz01-dev-ops-akama-01',   # master下的minion
+    'ROLLBACK_SIZE': 5      # jenkins上面保留版本必须大于ROLLBACK_SIZE否则会导致回滚失败
+}
+
+DINGTALK_CHATBOT = {
+    'URI': 'https://oapi.dingtalk.com/robot/send?access_token=a21a1df49d416fd8cca372a3ce7b3435bd3604f0c1d25779116f96d46bb390b1'
+}

@@ -16,7 +16,7 @@ from common.utils import logger, update_cache_value, update_obj
 from common.permissions import DevopsPermission, DeployPermission, IsDevopsPermission
 from ..models import DeploymentOrder
 from common.apis import jenkins_api, saltapi
-from ..tasks import start_job, test_start_job, set_step_cache
+from ..tasks import start_job, set_step_cache
 from ..common import *
 from ..models import History
 

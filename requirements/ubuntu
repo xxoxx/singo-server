@@ -1,3 +1,8 @@
-sudo apt-get install libmysqlclient-dev
+sudo apt-get update
+sudo apt-get upgrade
+
+sudo apt-get install libmysqlclient-dev redis-server
+
+sudo systemctl enable redis-server.service
 
 mysqldump -u root -pnj532680 devops > devops.sql
