@@ -155,12 +155,15 @@ def deploy_state_sls(f, order_obj):
 # 部署完成后的状态处理
 def end_job(f, cache_name, order_obj, his_obj, order_data=None, his_data=None, cache_data=None, write_msg=''):
     deploy_cache = cache.get(cache_name, {})
-    update_obj(his_obj, **his_data)
+
     update_obj(order_obj, **order_data)
     update_cache_value(cache_name, deploy_cache, **cache_data)
+    his_obj and update_obj(his_obj, **his_data)
 
-    f.write('> {}\n'.format(write_msg))
-    f.flush()
+    if f:
+        f.write('> {}\n'.format(write_msg))
+        f.flush()
+        f.close()
 
 def timing(f):
     @wraps(f)
@@ -198,28 +201,38 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
         # 设置第几次执行上线单
         order_obj.deploy_times += 1
         deploy_cache = cache.get(cache_name, {})
-        # 记录日志
-        his_obj = History.objects.create(
-            **{
-                'order_id': order_obj.id,
-                'deploy_times': order_obj.deploy_times,
-                'title': order_obj.title,
-                'project_name': order_obj.project.name,
-                'env': order_obj.env,
-                'type': order_obj.type,
-                'servers_ip': order_obj.project.servers_ip,
-                'servers_saltID': order_obj.project.servers_saltID,
-                'branche': order_obj.branche,
-                'commit_id': order_obj.commit_id,
-                'commit': order_obj.commit,
-                'jk_number': deploy_cache.get('build_number'),
-                'applicant': order_obj.applicant.name,
-                'reviewer': order_obj.reviewer.name,
-                'assign_to': assign_to,
-                'log_file': deploy_cache.get('log'),
-            }
-        )
-        f = open(deploy_cache['log'], 'a')
+        his_obj = None
+        f = None
+
+        try:
+            # 记录日志
+            his_obj = History.objects.create(
+                **{
+                    'order_id': order_obj.id,
+                    'deploy_times': order_obj.deploy_times,
+                    'title': order_obj.title,
+                    'project_name': order_obj.project.name,
+                    'env': order_obj.env,
+                    'type': order_obj.type,
+                    'servers_ip': order_obj.project.servers_ip,
+                    'servers_saltID': order_obj.project.servers_saltID,
+                    'branche': order_obj.branche,
+                    'commit_id': order_obj.commit_id,
+                    'commit': order_obj.commit,
+                    'jk_number': deploy_cache.get('build_number'),
+                    'applicant': order_obj.applicant.name,
+                    'reviewer': order_obj.reviewer.name,
+                    'assign_to': assign_to,
+                    'log_file': deploy_cache.get('log'),
+                }
+            )
+
+            f = open(deploy_cache.get('log'), 'a')
+
+        except Exception as e:
+            jenkins_api.cancel_build(deploy_cache.get('job_name'), deploy_cache.get('queue_id'), deploy_cache.get('build_number'))
+            raise e
+
 
         if order_obj.type != ROLLBACK:
             #################jenkins构建################
@@ -247,8 +260,6 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
                 cache_data={'is_lock': False, 'status': S_FAILED},
                 write_msg='部署失败'
                 )
-    finally:
-        f.close()
 
 
 # def timing(*args, **kwargs):

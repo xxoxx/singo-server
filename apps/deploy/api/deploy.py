@@ -248,9 +248,7 @@ class Test(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request, format=None):
-        update_cache_value('mytest', {'a': 1}, **{'b': 2}, timeout=CACHE_TIMEOUT, c=3)
-        data = cache.get('mytest')
-        return Response(data, status=200)
+        return Response('OK', status=200)
 
     def post(self, request, format=None):
         # ret = saltapi.state_sls(['devops', None], **{

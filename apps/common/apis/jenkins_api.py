@@ -54,8 +54,16 @@ class JenkinsAPI(object):
                         f.write(chunk)
         return local_full_filename
 
+    def cancel_build(self, name, queue_id, build_number):
+        try:
+            self.__server.cancel_queue(queue_id)
+            self.__server.stop_build(name, build_number)
+        except Exception as e:
+            logger.error(e)
+
     def test(self):
-        return self.__server.get_build_info('devops', 43)
-        # return self.__server.get_queue_info()
+        return self.__server.cancel_queue(3590)
+        # # return self.__server.stop_build('devops', 98)
+        return self.__server.get_queue_info()
 
 jenkins_api = JenkinsAPI()
