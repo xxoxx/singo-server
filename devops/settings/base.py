@@ -35,9 +35,11 @@ ENV = os.getenv('devops_env', 'dev')
 if ENV == 'dev':
     DEBUG = True
     SECRET_KEY = '%u6kxw-a4k-*87bd1)uu^9s-h141zq)o!a#kjval5s&^#$#q)#'
+    FRONT_END_URL = 'http://127.0.0.1:9528'
 elif ENV == 'test':
     DEBUG = True
     SECRET_KEY = 'cojnkm-8ukb)n(2btiud$rc+x-zl!to$$#_2nn&4p%89fle-lz'
+    FRONT_END_URL = 'http://akama.test.ops.com'
 else:
     DEBUG = False
     SECRET_KEY = '=9p_gjl_d3*0-do^2%utnxqqp)i*yg5ma3z4&_el8m0v5!@x7r'

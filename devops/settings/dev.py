@@ -5,7 +5,6 @@ import os
 from .base import BASE_DIR, DEBUG
 
 LOG_LEVEL = 'DEBUG' if DEBUG else 'INFO'
-FRONT_END_URL = 'http://127.0.0.1:9528'
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
