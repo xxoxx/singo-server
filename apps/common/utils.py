@@ -144,4 +144,3 @@ def update_cache_value(cache_name, old_val=None, timeout=24*3600, **kwargs):
 def update_obj(obj, **kwargs):
     obj.__dict__.update(**kwargs)
     obj.save()
-    return obj

@@ -32,6 +32,7 @@ def jenkins_log(f, job_name, build_number, line_number):
 def set_step_cache(cache_name, deploy_cache):
     deploy_cache['current_step'] += 1
     cache.set(cache_name, deploy_cache, timeout=CACHE_TIMEOUT)
+    logger.debug(str(deploy_cache))
 
 def deal_with_salt_ret(rets):
     """
@@ -128,7 +129,7 @@ def deploy_state_sls(f, order_obj):
 
     rets = saltapi.state_sls(salt_id_list, **{
         'pillar':
-            {
+            {   'project': order_obj.project.name,
                 'order_id': str(order_obj.id),
                 'env': order_obj.env,
                 'devops_env': settings.ENV
@@ -174,7 +175,8 @@ def timing(f):
                                                         TYPE[order_obj.type][1],
                                                         order_obj.project.name)
                                       )
-            realtime_log_url = '{}/log.html?id={}'.format(settings.FRONT_END_URL, order_obj.id)
+            # realtime_log_url = '{}/log.html?id={}'.format(settings.FRONT_END_URL, order_obj.id)
+            realtime_log_url = '{}/deploy/log/{}'.format(settings.FRONT_END_URL, order_obj.id)
             dingtalk_chatbot.send_link('实时日志', '点击查看日志', realtime_log_url)
         except Exception as e:
             logger.exception(e)
