@@ -45,7 +45,10 @@ class SaltAPI(object):
         if not self.__token_expire > time.time():
             self.get_token()
             headers['X-Auth-Token'] = self.__token
-        return requests.post(url, headers=headers, data=data, json=json, verify=False, timeout=self.__timeout)
+
+        ret =  requests.post(url, headers=headers, data=data, json=json, verify=False, timeout=self.__timeout)
+        logger.debug(ret.text)
+        return ret
 
     def get_token(self, prefix='/login'):
         '''

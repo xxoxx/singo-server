@@ -170,9 +170,9 @@ def timing(f):
     def wrapper(*args, **kwargs):
         try:
             order_obj = args[1]
-            dingtalk_chatbot.text_msg('{}开始{}项目 {}'.format(ENV[order_obj.env][1],
-                                                           TYPE[order_obj.type][1],
-                                                           order_obj.project.name)
+            dingtalk_chatbot.text_msg('{}开始{} {}'.format(ENV[order_obj.env][1],
+                                                        TYPE[order_obj.type][1],
+                                                        order_obj.project.name)
                                       )
             realtime_log_url = '{}/log.html?id={}'.format(settings.FRONT_END_URL, order_obj.id)
             dingtalk_chatbot.send_link('实时日志', '点击查看日志', realtime_log_url)
@@ -187,10 +187,10 @@ def timing(f):
         his_obj = History.objects.get(order_id=order_obj.id, deploy_times=order_obj.deploy_times)
 
         dingtalk_chatbot.text_msg('{}{}{}{},耗时 {}'.format(ENV[order_obj.env][1],
-                                                                        TYPE[order_obj.type][1],
-                                                                        order_obj.project.name,
-                                                                        HISTORY_STATUS[his_obj.result][1],
-                                                                        timedelta(seconds=elapsed_time))
+                                                                order_obj.project.name,
+                                                                TYPE[order_obj.type][1],
+                                                                HISTORY_STATUS[his_obj.result][1],
+                                                                timedelta(seconds=elapsed_time))
                                   )
     return wrapper
 

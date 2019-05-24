@@ -172,7 +172,7 @@ class RedeployJob(DeployJob):
     def start_deploy(self, cache_name, order_obj, assign_to):
         self.check_redeploy(order_obj)
         # 设置工单类型和状态
-        update_obj(order_obj, **{'status': D_PENDING, 'type': REONLONE})
+        order_obj = update_obj(order_obj, **{'status': D_PENDING, 'type': REONLONE})
         super(RedeployJob, self).start_deploy(cache_name, order_obj, assign_to)
 
     def post(self, request, pk, format=None):
