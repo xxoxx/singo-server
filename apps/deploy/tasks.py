@@ -131,7 +131,7 @@ def deploy_state_sls(f, order_obj):
         'pillar':
             {   'project': order_obj.project.name,
                 'order_id': str(order_obj.id),
-                'env': order_obj.env,
+                'env': S_ENV[order_obj.env][1],
                 'devops_env': settings.ENV
             },
         'mods': order_obj.project.name,

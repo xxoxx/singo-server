@@ -4,7 +4,7 @@ __datetime__ = '2019/5/7 11:03 AM'
 __all__ = ['D_UNREVIEWED', 'PRO', 'ONLINE', 'D_PENDING', 'PRE', 'ROLLBACK', 'D_RUNNING', 'D_FAILED',
            'TEST', 'REONLONE', 'D_SUCCESSFUL', 'D_REJECTED', 'H_FAILED', 'H_CANCELED',
            'H_UNKNOWN', 'H_SUCCESSFUL', 'CACHE_TIMEOUT', 'S_RUNNING', 'S_FAILED', 'S_SUCCESSFUL',
-           'S_UNKNOW']
+           'S_UNKNOW', 'S_ENV']
 
 # 部署方式
 ONLINE  = 0
@@ -36,6 +36,13 @@ S_RUNNING = 'running'
 S_FAILED = 'failed'
 S_SUCCESSFUL = 'successful'
 S_UNKNOW = 'unknown'
+
+S_ENV = (
+    (PRO, 'pro'),
+    (PRE, 'pre'),
+    (TEST, 'test')
+)
+
 
 
 
