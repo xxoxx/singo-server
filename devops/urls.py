@@ -24,13 +24,15 @@ from drf_yasg.views import get_schema_view as yasg_get_schema_view
 from drf_yasg import openapi
 from django.views.static import serve
 from rest_framework.routers import DefaultRouter
-
 from rest_framework_jwt.views import obtain_jwt_token
 
 from users.api.login import ObtainAuthTokenAndLogging, obtainJwtTokenAndLogging
 from .settings import MEDIA_ROOT
 from users.urls import router  as user_router
 from resources.urls import router  as resources_router
+from .api import devops_info
+
+
 schema_view = get_schema_view(title="Devops API",
                               renderer_classes=[SwaggerUIRenderer, OpenAPIRenderer])
 
@@ -62,7 +64,7 @@ api_patterns = [
     url(r'^ldap/v1/', include('ldap.urls', namespace='api-api-ldap', app_name='api-ldap')),
     url(r'^SQLAudit/v1/', include('SQLAudit.urls', namespace='api-sql-audit', app_name='SQLAudit')),
     url(r'^deploy/v1/', include('deploy.urls', namespace='api-deploy', app_name='deploy')),
-
+    url(r'^devops-info/', devops_info),
 ]
 
 urlpatterns = [
@@ -84,6 +86,7 @@ urlpatterns = [
     # drf_yasg 文档
     url(r'^swagger(?P<format>\.json|\.yaml)$', yasg_schema_view.without_ui(cache_timeout=0), name='schema-json'),
     url(r'^swagger/$', yasg_schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+
     # redoc 不好用,但能生成json格式的文档树
     # url(r'^redoc/$', yasg_schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
