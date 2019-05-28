@@ -50,7 +50,7 @@ LOGGING = {
             'formatter': 'detail'
         },
         'file': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'D',
             'interval': 1,
