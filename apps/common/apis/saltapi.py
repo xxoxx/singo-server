@@ -266,7 +266,7 @@ class SaltAPI(object):
                 }
 
         ret = self.post(data=data)
-        logger.debug(ret.text)
+
         return ret.json()
 
     def run_script(self, tgt, path):
