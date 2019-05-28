@@ -163,6 +163,7 @@ def end_job(f, cache_name, order_obj, his_obj, order_data=None, his_data=None, c
 
     if f:
         f.write('> {}\n'.format(write_msg))
+        f.write('EOF')
         f.flush()
         f.close()
 
@@ -277,11 +278,7 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
 
 @my_scheduler_run_now('date')
 def test_start_job(cache_name, order_obj, assign_to, *args, **kwargs):
-    # from django.core.cache import cache
-    # job_id = cache.get('deploy.tasks.test_start_job')
-    # print(job_id)
-    # print('test_start_job')
     # scheduler.remove_job(job_id)
-    kwargs.get('job_id')
-    time.sleep(10)
+    # kwargs.get('job_id')
+    # time.sleep(10)
     print('end')
