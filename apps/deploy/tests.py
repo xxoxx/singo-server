@@ -305,17 +305,3 @@ a={'return': [
 # url = 'http://doc.ops.com/login.action'
 # r = session.post(url, data=data)
 # print(session.cookies)
-{'return': [
-    {'hz01-dev-ops-akama-01':
-         {'archive_|-extract_app_|-/var/www/html_|-extracted':
-              {'comment': 'salt://packages/devops-web.tar.gz extracted to /var/www/html/', 'name': '/var/www/html', 'start_time': '14:17:13.857030',
-               'result': True, 'duration': 766.979, '__run_num__': 0, '__sls__': 'devops-web', 'changes': {'updated ownership': True, 'extracted_files': 'no tar output so far'}, '__id__': 'extract_app'},
-          'http_|-alert_code_|-http://172.16.102.28:8418/api/deploy/v1/deploy/b200965b-5f92-499b-86fc-bd24511e9ac2/webhook/_|-query':
-              {'comment': 'The following requisites were not found:\n                   require:\n                       cmd: extract_app\n', 'start_time': '14:17:14.627225',
-               'result': False, 'duration': 0.045, '__run_num__': 1, '__sls__': 'devops-web', 'changes': {}},
-          'cmd_|-finally_|-echo successful_|-run':
-              {'comment': 'The following requisites were not found:\n                   require:\n                       cmd: extract_app\n', 'start_time': '14:17:14.629778',
-               'result': False, 'duration': 0.046, '__run_num__': 2, '__sls__': 'devops-web', 'changes': {}},
-          'http_|-alert_finally_|-http://172.16.102.28:8418/api/deploy/v1/deploy/b200965b-5f92-499b-86fc-bd24511e9ac2/webhook/_|-query':
-              {'comment': 'One or more requisite failed: devops-web.finally', 'start_time': '14:17:14.630549',
-               'result': False, 'duration': 0.04, '__run_num__': 3, '__sls__': 'devops-web', 'changes': {}}}}]}

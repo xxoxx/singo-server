@@ -248,6 +248,9 @@ class Test(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request, format=None):
+        d = DeploymentOrder.objects.get(pk='b200965b-5f92-499b-86fc-bd24511e9ac2')
+        logger.debug(d.title)
+        logger.debug(d.project.servers_ip)
         return Response('OK', status=200)
 
     def post(self, request, format=None):

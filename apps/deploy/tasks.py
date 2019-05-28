@@ -162,8 +162,7 @@ def end_job(f, cache_name, order_obj, his_obj, order_data=None, his_data=None, c
     his_obj and update_obj(his_obj, **his_data)
 
     if f:
-        f.write('> {}\n'.format(write_msg))
-        f.write('EOF')
+        f.write('> {}\nEOF'.format(write_msg))
         f.flush()
         f.close()
 
