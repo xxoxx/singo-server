@@ -206,6 +206,9 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
         his_obj = None
         f = None
 
+        jenkins_api.cancel_build(deploy_cache.get('job_name'), deploy_cache.get('queue_id'),
+                                 deploy_cache.get('build_number'))
+
         try:
             # 记录日志
             his_obj = History.objects.create(
@@ -232,19 +235,20 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
             f = open(deploy_cache.get('log'), 'a')
 
         except Exception as e:
-            jenkins_api.cancel_build(deploy_cache.get('job_name'), deploy_cache.get('queue_id'), deploy_cache.get('build_number'))
+            # jenkins_api.cancel_build(deploy_cache.get('job_name'), deploy_cache.get('queue_id'), deploy_cache.get('build_number'))
             raise e
 
+        time.sleep(10)
 
-        if order_obj.type != ROLLBACK:
+        # if order_obj.type != ROLLBACK:
             #################jenkins构建################
-            build(f, cache_name, deploy_cache, his_obj)
+            # build(f, cache_name, deploy_cache, his_obj)
 
         ###################下载代码##################
-        download_package(f, cache_name, deploy_cache, order_obj)
+        # download_package(f, cache_name, deploy_cache, order_obj)
 
         ##################执行SLS文件################
-        deploy_state_sls(f, order_obj)
+        # deploy_state_sls(f, order_obj)
 
         ##################完成发布################
         end_job(f, cache_name, order_obj, his_obj,
@@ -255,6 +259,7 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
                 )
 
     except Exception as e:
+        print('=============================')
         logger.exception(e)
         end_job(f, cache_name, order_obj, his_obj,
                 order_data={'status': D_FAILED, 'result_msg': str(e), 'complete_time': datetime.now()},

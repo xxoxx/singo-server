@@ -7,7 +7,6 @@ from pymongo import MongoClient
 from common.utils import logger
 
 try:
-    mongodb_client = None
     URI = 'mongodb://{}:{}@{}:{}/'.format(
         settings.SQLAUDIT.get('USERNAME'),
         settings.SQLAUDIT.get('PASSWORD'),
@@ -16,4 +15,5 @@ try:
     )
     mongodb_client = MongoClient(URI)
 except Exception as e:
+    mongodb_client = None
     logger.critical(e)
