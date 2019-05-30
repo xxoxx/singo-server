@@ -2,9 +2,10 @@ from django.conf import settings
 import requests
 import urllib3
 import time
-from common.utils import logger
+from common.utils import logger, Bcolor
 from django.core.cache import cache
 import json as JSON
+
 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -28,6 +29,11 @@ class SaltAPI(object):
             self.get_token()
 
     def post(self, headers=None, data=None, json=None, prefix='/'):
+
+        salt_token = cache.get('salt-token')
+        logger.debug('{}:{}'.format(self.__token, self.__token_expire))
+        logger.debug(salt_token)
+
         if not headers and data:
             headers = {
                 'X-Auth-Token': self.__token,
@@ -41,8 +47,9 @@ class SaltAPI(object):
             }
 
         url = '{}{}'.format(self.__url, prefix)
+
         # token过期,重新获取
-        if not self.__token_expire > time.time():
+        if time.time() >= self.__token_expire:
             self.get_token()
             headers['X-Auth-Token'] = self.__token
 
@@ -68,7 +75,7 @@ class SaltAPI(object):
             req = requests.post(url, headers=headers,
                                 data=data, verify=False, timeout=self.__timeout)
 
-            logger.debug(req.text)
+            logger.debug(JSON.dumps(req.json(), indent=4))
 
             if req.status_code != 200:
                 return {'code': req.status_code, 'detail': '请求异常'}
@@ -79,9 +86,11 @@ class SaltAPI(object):
             start = req['return'][0]['start']
 
             cache.set('salt-token',
-                      {'token': self.__token,
-                       'start': start,
-                       'expire': self.__token_expire},
+                      {
+                          'token': self.__token,
+                          'start': start,
+                          'expire': self.__token_expire
+                      },
                       timeout=86400)
 
         except Exception as e:
@@ -94,7 +103,7 @@ class SaltAPI(object):
             'X-Auth-Token': self.__token
         }
         # token 过期,重新获取
-        if not self.__token_expire > time.time():
+        if time.time() >= self.__token_expire > time.time():
             self.__token = self.get_token()
             self.__header["X-Auth-Token"] = self.__token
 
