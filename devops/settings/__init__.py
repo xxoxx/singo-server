@@ -3,9 +3,10 @@ __datetime__ = '2019/4/3 1:59 PM '
 
 from .base import *
 
-if ENV == 'dev':
-    from .dev import *
-elif ENV == 'test':
+
+if ENV == 'test':
     from .test import *
+elif ENV == 'pro':
+    from .pro import *
 else:
-    pass
+    from .dev import *
