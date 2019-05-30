@@ -17,8 +17,6 @@ from ..models import DeploymentOrder, History
 from ..common import *
 
 
-
-
 class DeploymentOrderViewSet(viewsets.ModelViewSet):
     serializer_class = DeploymentOrderSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -56,7 +54,12 @@ class RollBackList(APIView):
     def get(self, request, project_name, format=None):
         try:
             size = settings.DEPLOY.get('ROLLBACK_SIZE', 1)
-            orders = DeploymentOrder.objects.filter(project__name=project_name, status=D_SUCCESSFUL, type=ONLINE)[0:size]
+            # orders = DeploymentOrder.objects.filter(project__name=project_name,
+            #                                         status=D_SUCCESSFUL,
+            #                                         type=ONLINE)[0:size]
+
+            orders = DeploymentOrder.objects.filter(project__name=project_name,
+                                                    status=D_SUCCESSFUL).filter(~Q(type=ROLLBACK))[0:size]
             data = []
             for order in orders:
                 try:

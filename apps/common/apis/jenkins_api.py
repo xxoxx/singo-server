@@ -40,6 +40,7 @@ class JenkinsAPI(object):
     def download_package(self, package_url, name, build_number):
         URI = settings.JENKINS.get('URI')
         download_url = '{}/job/{}/{}/artifact/{}'.format(URI, name, build_number, package_url)
+        logger.debug(download_url)
         local_filename = download_url.split('/')[-1]
         code_path = os.path.join(settings.DEPLOY.get('CODE_PATH'), 'packages')
         local_full_filename = os.path.join(code_path, local_filename)

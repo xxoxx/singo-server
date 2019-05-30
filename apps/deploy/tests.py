@@ -305,3 +305,7 @@ a={'return': [
 # url = 'http://doc.ops.com/login.action'
 # r = session.post(url, data=data)
 # print(session.cookies)
+import json
+f = open('/tmp/test.txt', 'w')
+f.write(json.dumps(a, indent=4))
+f.close()

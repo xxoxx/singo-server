@@ -6,6 +6,8 @@ import time
 from django.core.cache import cache
 from functools import wraps
 from django.conf import settings
+import json
+from django.db import connections
 
 from common.apscheduler import my_scheduler_run_now
 from common.apis import jenkins_api, dingtalk_chatbot
@@ -137,7 +139,8 @@ def deploy_state_sls(f, order_obj):
         'mods': order_obj.project.name,
         'saltenv': 'deploy',
     })
-    f.write(str(rets)+'\n')
+
+    f.write(json.dumps(rets, indent=4))
     logger.debug('salt SLS 执行完成')
     f.write('> salt SLS 执行完成\n')
     f.flush()
@@ -205,6 +208,9 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
         deploy_cache = cache.get(cache_name, {})
         his_obj = None
         f = None
+
+        for conn in connections.all():
+            conn.close_if_unusable_or_obsolete()
 
         try:
             # 记录日志

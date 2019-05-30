@@ -4,7 +4,7 @@ import urllib3
 import time
 from common.utils import logger
 from django.core.cache import cache
-from common.utils import Bcolor
+import json as JSON
 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -47,7 +47,7 @@ class SaltAPI(object):
             headers['X-Auth-Token'] = self.__token
 
         ret =  requests.post(url, headers=headers, data=data, json=json, verify=False, timeout=self.__timeout)
-        logger.debug(ret.text)
+        logger.debug(JSON.dumps(ret.json(), indent=4))
         return ret
 
     def get_token(self, prefix='/login'):

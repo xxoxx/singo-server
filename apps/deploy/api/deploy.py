@@ -49,21 +49,17 @@ class DeployJob(BaseDeployAPIView):
     permission_classes = (permissions.IsAuthenticated, DeployPermission)
 
 
-    def __check_deploy(self, order_obj, cache_name, deploy_cache):
+    def check_deploy(self, order_obj, deploy_cache):
         # 避免被重复执行部署
         if deploy_cache.get('is_lock'):
             raise DeployError('该任务已经启动')
         elif order_obj.status != 1:
             raise DeployError('该工单状态不能上线')
-        else:
-            # 锁定上线
-            cache.set(cache_name, {'is_lock': True}, timeout=CACHE_TIMEOUT)
+        return True
 
 
     def __init_jenkins(self, order_obj, jenkins_job_name):
         if order_obj.type != ROLLBACK:
-            # next_build_number = 80
-            # queue_id = 1
             build_number = jenkins_api.get_next_build_number(jenkins_job_name)
             queue_id = jenkins_api.build_job(jenkins_job_name, parameters={'BRANCH': order_obj.branche})
         else:
@@ -96,7 +92,9 @@ class DeployJob(BaseDeployAPIView):
         deploy_cache = cache.get(cache_name, {})
 
         # 监测工单是否处于发布状态
-        self.__check_deploy(order_obj, cache_name, deploy_cache)
+        self.check_deploy(order_obj, deploy_cache)
+        # 锁定上线
+        cache.set(cache_name, {'is_lock': True}, timeout=CACHE_TIMEOUT)
         # 初始化jenkins
         build_number, queue_id = self.__init_jenkins(order_obj, jenkins_job_name)
         # 获取步骤
@@ -130,7 +128,6 @@ class DeployJob(BaseDeployAPIView):
         order_obj = self.get_object()
         try:
             cache_name = 'deploy-{}'.format(order_obj.project.name)
-
             self.start_deploy(cache_name, order_obj, request.user.name)
         except DeployError as e:
             logger.exception(e)
@@ -161,18 +158,21 @@ class RedeployJob(DeployJob):
     """
     permission_classes = (permissions.IsAuthenticated, IsDevopsPermission)
 
-    def check_redeploy(self, order_obj):
+    def check_deploy(self, order_obj, deploy_cache):
         # 结单大于12小时不能重新上线
         if order_obj.complete_time and (datetime.now() - order_obj.complete_time).total_seconds() > 12 * 3600:
             raise DeployError('超出重新上线的时间', 400)
         # 只有失败和成功状态的上线单才能重新上线
         elif order_obj.type == ROLLBACK or (order_obj.status != D_SUCCESSFUL and order_obj.status != D_FAILED):
             raise DeployError('该工单状态或类型不允许重新上线', 400)
+        elif deploy_cache.get('is_lock'):
+            raise DeployError('该任务已经启动')
 
     def start_deploy(self, cache_name, order_obj, assign_to):
-        self.check_redeploy(order_obj)
         # 设置工单类型和状态
-        update_obj(order_obj, **{'status': D_PENDING, 'type': REONLONE})
+        # update_obj(order_obj, **{'status': D_PENDING, 'type': REONLONE})
+
+        order_obj.type = REONLONE if order_obj.type != ROLLBACK else ROLLBACK
         super(RedeployJob, self).start_deploy(cache_name, order_obj, assign_to)
 
     def post(self, request, pk, format=None):
@@ -181,7 +181,6 @@ class RedeployJob(DeployJob):
         o_type = order_obj.type
         try:
             cache_name = 'deploy-{}'.format(order_obj.project.name)
-
             self.start_deploy(cache_name, order_obj, request.user.name)
         except DeployError as e:
             logger.exception(e)
