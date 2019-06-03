@@ -17,8 +17,8 @@ class ServerSerializer(serializers.Serializer):
                                                   many=False, label='供应商')
     # provider_name = serializers.SerializerMethodField()
     saltID = serializers.CharField(max_length=128, label='saltID', allow_null=True)
-    # planform = serializers.ChoiceField(choices=['Linux', 'Windows', 'Solaris', 'Unknow'],
-    #                                    label='平台')
+    # planform = serializers.ChoiceField(choices=['Linux', 'Windows', 'Solaris', 'Unknow'], label='平台')
+    env = serializers.ChoiceField(choices=Server.ENV, label='环境')
     _IP = serializers.IPAddressField(label='连接IP', allow_null=True)
     # protocol = serializers.CharField(choices=['ssh'], label='远程连接协议', default='ssh')
     protocol = serializers.ChoiceField(choices=['ssh'], label='远程连接协议', default='ssh')
@@ -71,6 +71,7 @@ class SaltServerSerializer(serializers.Serializer):
                                                   allow_null=True, allow_empty=True)
     provider_name = serializers.SerializerMethodField()
     saltID = serializers.CharField(max_length=128, label='服务器ID')
+    env = serializers.ChoiceField(choices=Server.ENV, label='环境')
     planform = serializers.CharField(max_length=56, label='平台')
     os = serializers.CharField(max_length=128, label='操作系统')
     cpu_model = serializers.CharField(max_length=256, label='CPU类型')
