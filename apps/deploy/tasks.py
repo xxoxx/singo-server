@@ -127,7 +127,7 @@ def deploy_state_sls(f, order_obj):
     f.write('> 开始执行salt SLS\n')
     f.flush()
 
-    salt_id_list = [s.saltID for s in order_obj.project.servers.all()]
+    salt_id_list = [s.saltID for s in order_obj.deploy_servers]
 
     rets = saltapi.state_sls(salt_id_list, **{
         'pillar':
@@ -222,8 +222,8 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
                     'project_name': order_obj.project.name,
                     'env': order_obj.env,
                     'type': order_obj.type,
-                    'servers_ip': order_obj.project.servers_ip,
-                    'servers_saltID': order_obj.project.servers_saltID,
+                    'servers_ip': order_obj.servers_ip,
+                    'servers_saltID': order_obj.servers_saltID,
                     'branche': order_obj.branche,
                     'commit_id': order_obj.commit_id,
                     'commit': order_obj.commit,

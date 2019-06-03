@@ -81,7 +81,7 @@ class DeployJob(BaseDeployAPIView):
         cmd = "grep -o desc:.*$ {}|awk -F \"'\" '{{print $2}}'".format(sls_file)
         ret = saltapi.cmd_run(minion, arg=cmd)
         desc = ret['return'][0][minion]
-        step_size = len(steps)+len(desc.split('\n'))*order_obj.project.servers.count()
+        step_size = len(steps)+len(desc.split('\n'))*len(order_obj.deploy_servers)
         steps.extend(desc.split('\n'))
 
         return steps, step_size
@@ -249,7 +249,7 @@ class Test(APIView):
     def get(self, request, format=None):
         d = DeploymentOrder.objects.get(pk='b200965b-5f92-499b-86fc-bd24511e9ac2')
         logger.debug(d.title)
-        logger.debug(d.project.servers_ip)
+        logger.debug(d.servers_ip)
         return Response('OK', status=200)
 
     def post(self, request, format=None):

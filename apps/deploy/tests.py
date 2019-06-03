@@ -307,7 +307,67 @@ a={'return': [
 # print(session.cookies)
 
 
-from jenkins import Jenkins
-URI= 'http://{}:{}@jenkins.ops.com'.format('zhoujinliang', '117c911a35acf51e428e29f3ccb363f53f')
-server = Jenkins(URI)
-server.build_job(name='devops-web', parameters={'BRANCH': 'master', 'ENV':'prod'})
+# from jenkins import Jenkins
+# URI= 'http://{}:{}@jenkins.ops.com'.format('zhoujinliang', '117c911a35acf51e428e29f3ccb363f53f')
+# server = Jenkins(URI)
+# server.build_job(name='devops-web', parameters={'BRANCH': 'master', 'ENV':'prod'})
+
+import json, requests
+class OAAPI(object):
+
+    def __init__(self, url, username, password, timeout=30):
+        self.url = url
+        self.username = username
+        self.password = password
+        self.timeout = timeout
+        self.token_expire = None
+        # self.token = self.get_token()
+        self.token = 'ade45486-c1d5-4c05-b442-03b54391fd65'
+
+    def get_token(self, prefix='token'):
+
+        data = json.dumps({ "userName": self.username, "password": self.password})
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        token_url = '{}{}'.format(self.url, prefix)
+
+        try:
+            req = requests.post(token_url, headers=headers,
+                                data=data, verify=False, timeout=self.timeout)
+            if req.status_code == 200:
+                print(req.json())
+                return req.json().get('id')
+        except Exception as e:
+            print(e)
+
+        return None
+
+
+    def user_auth(self, username, password):
+        data = {
+            'username': username,
+            'password': password,
+            'token': self.token
+        }
+
+        params = {
+            'headers': { 'Accept': 'application/json' },
+            'url': self.url+'userAuth/userAuth/',
+            'params': { 'token': self.token },
+            'timeout': self.timeout,
+            'json': data,
+            'verify': False
+        }
+
+        ret = requests.post(**params)
+        return ret.json()
+
+
+
+
+
+oa = OAAPI(url='http://oa.ztocwst.com:8000/seeyon/rest/', username='rest', password='Lemon1912', timeout=30)
+print(oa.user_auth('000214', 'nj532680'))
+

@@ -41,14 +41,6 @@ class Project(models.Model):
     def __str__(self):
         return self.name
 
-    @property
-    def servers_ip(self):
-        return ','.join(s._IP for s in self.servers.all())
-
-    @property
-    def servers_saltID(self):
-        return ','.join(s.saltID for s in self.servers.all())
-
     class Meta:
         verbose_name = '项目配置'
         verbose_name_plural = verbose_name
@@ -74,6 +66,20 @@ class DeploymentOrder(models.Model):
 
     def __str__(self):
         return self.title
+
+
+    # 根据环境获取需要部署的服务器
+    @property
+    def deploy_servers(self):
+        return [s for s in self.project.servers.all() if s.env == self.env]
+
+    @property
+    def servers_ip(self):
+        return ','.join(s._IP for s in self.deploy_servers)
+
+    @property
+    def servers_saltID(self):
+        return ','.join(s.saltID for s in self.deploy_servers)
 
     class Meta:
         verbose_name = '上线申请'
