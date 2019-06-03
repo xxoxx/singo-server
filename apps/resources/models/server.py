@@ -14,11 +14,20 @@ class Server(models.Model):
     PROTOCOL = (
         ('ssh', 'ssh'),
     )
+
+    ENV = (
+        (0, '生产环境'),
+        (1, '预发布环境'),
+        (2, '测试环境'),
+        (3, '开发环境')
+    )
+
     # important
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     hostname = models.CharField(max_length=128, db_index=True, verbose_name='主机名')
     saltID = models.CharField(max_length=128, db_index=True, verbose_name='服务器ID',
                               null=True, default=None, unique=True)
+    env = models.IntegerField(choices=ENV, default=3, verbose_name='部署环境')
     # os
     planform = models.CharField(max_length=56, choices=PLANFORM_TYPE, default='Unknow', verbose_name='平台类型')
     os = models.CharField(max_length=128, verbose_name='操作系统类型')
