@@ -31,6 +31,7 @@ H_FAILED = 3
 PRO = 0
 PRE = 1
 TEST = 2
+DEV = 3
 
 S_RUNNING = 'running'
 S_FAILED = 'failed'

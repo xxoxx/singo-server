@@ -261,9 +261,6 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
                 )
 
     except Exception as e:
-        print('=============================')
-        logger.debug(id(order_obj))
-        logger.debug(order_obj.project.servers_ip)
         logger.exception(e)
         end_job(f, cache_name, order_obj, his_obj,
                 order_data={'status': D_FAILED, 'result_msg': str(e), 'complete_time': datetime.now()},
