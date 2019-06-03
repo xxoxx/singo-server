@@ -24,7 +24,7 @@ class ProjectSerializer(serializers.ModelSerializer):
                                'id': instance.creator.id,
                                'name': instance.creator.name
                            }
-        ret['servers']= [{'id': s.id, 'hostname':s.hostname, 'ip':s._IP}for s in instance.servers.all()]
+        ret['servers']= [{'id': s.id, 'hostname':s.hostname, 'ip':s._IP, 'env': s.env}for s in instance.servers.all()]
 
         return ret
 
