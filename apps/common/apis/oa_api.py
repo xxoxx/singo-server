@@ -13,9 +13,9 @@ class OAAPI(BaseAPI):
     def __init__(self, url, username, password, timeout=30):
         super(OAAPI, self).__init__(url=url, username=username, password=password, timeout=timeout)
         # self.token = self.__get_token()
-        self.token = '355df79c-5861-47a9-8f99-0a7e3d7477ce'
+        self.token = '12b492b4-1044-4b26-adce-a8505f03d577'
 
-    def __get_token(self, prefix='token'):
+    def get_token(self, prefix='token'):
         """
         登录获取token
         """
@@ -69,7 +69,7 @@ class OAAPI(BaseAPI):
             req = __request(**__params)
 
             if req.status_code == 401 and req.json().get('code') == '1010':
-                self.token = self.__get_token()
+                self.token = self.get_token()
                 __params['params']['token'] = self.token
                 req = __request(**__params)
             return req.json()
@@ -99,6 +99,7 @@ oaapi = OAAPI(url=settings.OAAPI.get('URL'),
               username=settings.OAAPI.get('USERNAME'),
               password=settings.OAAPI.get('PASSWORD'),
               timeout=30)
+# print(oaapi.get_token())
     # print(oaapi.user_auth(username='000214', password='nj532680'))
     # print(oaapi.get_userinfo(username='000214'))
 
