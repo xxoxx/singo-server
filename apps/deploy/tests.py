@@ -305,7 +305,9 @@ a={'return': [
 # url = 'http://doc.ops.com/login.action'
 # r = session.post(url, data=data)
 # print(session.cookies)
-import json
-f = open('/tmp/test.txt', 'w')
-f.write(json.dumps(a, indent=4))
-f.close()
+
+
+from jenkins import Jenkins
+URI= 'http://{}:{}@jenkins.ops.com'.format('zhoujinliang', '117c911a35acf51e428e29f3ccb363f53f')
+server = Jenkins(URI)
+server.build_job(name='devops-web', parameters={'BRANCH': 'master', 'ENV':'prod'})

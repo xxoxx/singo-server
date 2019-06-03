@@ -61,7 +61,7 @@ class DeployJob(BaseDeployAPIView):
     def __init_jenkins(self, order_obj, jenkins_job_name):
         if order_obj.type != ROLLBACK:
             build_number = jenkins_api.get_next_build_number(jenkins_job_name)
-            queue_id = jenkins_api.build_job(jenkins_job_name, parameters={'BRANCH': order_obj.branche})
+            queue_id = jenkins_api.build_job(jenkins_job_name, parameters={'BRANCH': order_obj.branche, 'ENV':S_ENV[order_obj.env][1]})
         else:
             try:
                 history = History.objects.get(pk=order_obj.content)

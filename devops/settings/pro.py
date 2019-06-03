@@ -141,19 +141,23 @@ GITLABS = [
     {
         'URL': 'http://git.ops.com',
         'TOKEN': 'gsdU_1zEq5Cmoq3seGSF'
+    },
+    {
+        'URL': 'http://172.16.100.189',
+        'TOKEN': 'CU-pf_VmywTGqg1Ud1nN'
     }
 ]
 
 JENKINS = {
-    'URL': 'http://jenkins.ops.com',
-    'USER': 'zhoujinliang',
-    'TOKEN': '117c911a35acf51e428e29f3ccb363f53f',
-    'URI': 'http://{}:{}@jenkins.ops.com'.format('zhoujinliang', '117c911a35acf51e428e29f3ccb363f53f')
+    'URL': 'http://ci.ops.com',
+    'USER': 'cainanjie',
+    'TOKEN': '11f98e92fa6f50834aaa98ab75975efe48',
+    'URI': 'http://{}:{}@ci.ops.com'.format('cainanjie', '11f98e92fa6f50834aaa98ab75975efe48')
 }
 
 DEPLOY = {
     'CODE_PATH': '/srv/salt/deploy/',
-    'M_MINION': 'hz01-dev-ops-akama-01',   # master下的minion
+    'M_MINION': 'devops',   # master下的minion
     'ROLLBACK_SIZE': 5      # jenkins上面保留版本必须大于ROLLBACK_SIZE否则会导致回滚失败
 }
 
