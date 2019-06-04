@@ -3,11 +3,13 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 
 from ..models import UserGroup
-from ..models.user import User
+# from ..models.user import User
 from ..serializers import UserGroupSerializer, UserSerializer
 from common.pagination import CustomPagination
-from common.utils import logger
+from common.utils import logger, User
 from common.permissions import DevopsPermission
+from django.contrib.auth.models import Group
+
 
 class UserGroupleViewSet(viewsets.ModelViewSet):
     '''
@@ -48,9 +50,11 @@ class UserGroupleViewSet(viewsets.ModelViewSet):
         获取运维组成员
         '''
         try:
-            group = UserGroup.objects.get(name='devops')
-            members = group.members.all()
-            serializer = UserSerializer(members, many=True)
+            # group = UserGroup.objects.get(name='devops')
+            # members = group.members.all(name='devops')
+
+            group = Group.objects.get(name='devops')
+            serializer = UserSerializer(group.user_set.all(), many=True)
         except Exception as e:
             # 不存着devops组就获取超级用户
             members = User.objects.filter(is_superuser=1)

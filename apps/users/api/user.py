@@ -36,9 +36,9 @@ class UserProfileViewSet(mixins.ListModelMixin,
         'DELETE': ['{}.user_delete']
     }
 
-    def list(self, request, *args, **kwargs):
-        self.queryset = User.objects.filter(is_superuser=0).exclude(username=request.user.username)
-        return super(UserProfileViewSet, self).list(request, *args, **kwargs)
+    # def list(self, request, *args, **kwargs):
+    #     self.queryset = User.objects.filter(is_superuser=0).exclude(username=request.user.username)
+    #     return super(UserProfileViewSet, self).list(request, *args, **kwargs)
 
     @action(detail=False, methods=['get'], name='user-info', url_path='user-info')
     def userInfo(self, request):
