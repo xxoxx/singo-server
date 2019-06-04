@@ -26,7 +26,7 @@ from django.views.static import serve
 from rest_framework.routers import DefaultRouter
 from rest_framework_jwt.views import obtain_jwt_token
 
-from users.api.login import ObtainAuthTokenAndLogging, obtainJwtTokenAndLogging
+from users.api.login import ObtainAuthTokenAndLogging, obtainJwtTokenAndLogging, OAAuthWithForVPN
 from .settings import MEDIA_ROOT
 from users.urls import router  as user_router
 from resources.urls import router  as resources_router
@@ -76,6 +76,8 @@ urlpatterns = [
     url(r'^api-token-auth/', ObtainAuthTokenAndLogging.as_view()),
     # url(r'^api-jwt-token-auth/', obtain_jwt_token),
     url(r'^api-jwt-token-auth/', obtainJwtTokenAndLogging.as_view()),
+    # VPN授权登录验证
+    url(r'^api-vpn-auth/', OAAuthWithForVPN.as_view()),
     # url(r'^api/v1/', include(router.urls)),
     url(r'^api/', include(api_patterns)),
     # url(r'^resources/v1/', include('resources.urls', namespace='api-resources', app_name='resources')),

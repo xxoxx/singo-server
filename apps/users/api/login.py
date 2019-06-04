@@ -8,12 +8,11 @@ from rest_framework import status
 from datetime import datetime
 from rest_framework_jwt.settings import api_settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import check_password, make_password
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 
 from ..tasks import write_login_log
 from ..tasks import set_last_login
-from common.utils import Bcolor
-# from common.apis.oaapi import oaapi
 from common.apis import oaapi
 from common.utils import logger
 
@@ -100,4 +99,36 @@ class obtainJwtTokenAndLogging(ObtainJSONWebToken):
             logger.info(serializer.errors)
             write_login_log(request, username=username, status=False, type='JWT')
             return Response({'detail': '用户名或密码错误'}, status=status.HTTP_400_BAD_REQUEST)
+
+# VPN授权登录验证
+class OAAuthWithForVPN(APIView):
+    permission_classes = (AllowAny,)
+    def post(self, request, format=None):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        data = {
+            "status": 1,
+            "userinfo": {
+                "usergroup": "undefine",
+                "username": username,
+                "usernote": "undefine"
+            }
+        }
+
+        if oaapi.user_auth(username, password):
+            logger.info('OA账号:{},{}'.format(username, password))
+            user_info = oaapi.get_userinfo(username)
+
+            data = {
+                "status": 0,
+                "userinfo": {
+                    "usergroup": user_info.get('orgDepartmentName'),
+                    "username": username,
+                    "usernote": user_info.get('orgPostName')
+                }
+            }
+
+
+        return Response(data)
 
