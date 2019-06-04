@@ -77,7 +77,7 @@ urlpatterns = [
     # url(r'^api-jwt-token-auth/', obtain_jwt_token),
     url(r'^api-jwt-token-auth/', obtainJwtTokenAndLogging.as_view()),
     # VPN授权登录验证
-    url(r'^api-vpn-auth/', OAAuthWithForVPN.as_view()),
+    url(r'^api-vpn-auth/$', OAAuthWithForVPN, name='api-vpn-auth'),
     # url(r'^api/v1/', include(router.urls)),
     url(r'^api/', include(api_patterns)),
     # url(r'^resources/v1/', include('resources.urls', namespace='api-resources', app_name='resources')),

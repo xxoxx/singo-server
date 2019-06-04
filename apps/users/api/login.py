@@ -100,35 +100,37 @@ class obtainJwtTokenAndLogging(ObtainJSONWebToken):
             write_login_log(request, username=username, status=False, type='JWT')
             return Response({'detail': '用户名或密码错误'}, status=status.HTTP_400_BAD_REQUEST)
 
+from rest_framework.decorators import api_view, permission_classes
 # VPN授权登录验证
-class OAAuthWithForVPN(APIView):
-    permission_classes = (AllowAny,)
-    def post(self, request, format=None):
-        username = request.data.get('username')
-        password = request.data.get('password')
+@api_view(['POST'])
+@permission_classes((AllowAny,))
+def OAAuthWithForVPN(request):
+
+    username = request.data.get('username')
+    password = request.data.get('password')
+
+    data = {
+        "status": 1,
+        "userinfo": {
+            "usergroup": "undefine",
+            "username": username,
+            "usernote": "undefine"
+        }
+    }
+
+    if oaapi.user_auth(username, password):
+        logger.info('OA账号:{},{}'.format(username, password))
+        user_info = oaapi.get_userinfo(username)
 
         data = {
-            "status": 1,
+            "status": 0,
             "userinfo": {
-                "usergroup": "undefine",
+                "usergroup": user_info.get('orgDepartmentName'),
                 "username": username,
-                "usernote": "undefine"
+                "usernote": user_info.get('orgPostName')
             }
         }
 
-        if oaapi.user_auth(username, password):
-            logger.info('OA账号:{},{}'.format(username, password))
-            user_info = oaapi.get_userinfo(username)
 
-            data = {
-                "status": 0,
-                "userinfo": {
-                    "usergroup": user_info.get('orgDepartmentName'),
-                    "username": username,
-                    "usernote": user_info.get('orgPostName')
-                }
-            }
-
-
-        return Response(data)
+    return Response(data)
 

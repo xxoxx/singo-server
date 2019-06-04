@@ -365,9 +365,3 @@ class OAAPI(object):
         return ret.json()
 
 
-
-
-
-oa = OAAPI(url='http://oa.ztocwst.com:8000/seeyon/rest/', username='rest', password='Lemon1912', timeout=30)
-print(oa.user_auth('000214', 'nj532680'))
-
