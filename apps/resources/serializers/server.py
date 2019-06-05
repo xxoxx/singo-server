@@ -71,7 +71,7 @@ class SaltServerSerializer(serializers.Serializer):
                                                   allow_null=True, allow_empty=True)
     provider_name = serializers.SerializerMethodField()
     saltID = serializers.CharField(max_length=128, label='服务器ID')
-    env = serializers.ChoiceField(choices=Server.ENV, label='环境')
+    env = serializers.ChoiceField(choices=Server.ENV, label='环境', default=3)
     planform = serializers.CharField(max_length=56, label='平台')
     os = serializers.CharField(max_length=128, label='操作系统')
     cpu_model = serializers.CharField(max_length=256, label='CPU类型')
