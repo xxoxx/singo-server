@@ -144,7 +144,7 @@ GITLABS = [
     },
     {
         'URL': 'http://172.16.100.189',
-        'TOKEN': 'CU-pf_VmywTGqg1Ud1nN'
+        'TOKEN': 'FZKRMxowyvRfExDLmKp9'
     }
 ]
 
