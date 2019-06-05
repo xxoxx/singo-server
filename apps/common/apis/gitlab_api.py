@@ -13,7 +13,7 @@ class GitlabAPI(object):
         projects = []
 
         for gl in self.__gls:
-            projects.extend(gl.projects.list())
+            projects.extend(gl.projects.list(all=True))
 
         return projects
 
@@ -22,7 +22,7 @@ class GitlabAPI(object):
         for gl in self.__gls:
             try:
                 projects = gl.projects.get(path_with_namespace)
-                branches.append(projects.branches.list())
+                branches.append(projects.branches.list(all=True))
             except:
                 pass
         return branches
