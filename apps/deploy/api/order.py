@@ -9,7 +9,7 @@ from django.conf import settings
 from django.db.models import Q
 
 from common.utils import logger
-from common.permissions import DevopsPermission, DeployPermission
+from common.permissions import DevopsPermission, DeployPermission, IsDevopsPermission
 from common.pagination import CustomPagination
 from ..serializers import DeploymentOrderSerializer
 from ..filters import DeploymentOrderFilter
@@ -43,6 +43,14 @@ class DeploymentOrderViewSet(viewsets.ModelViewSet):
             return DeploymentOrder.objects.filter(Q(applicant=self.request.user) |
                                                   Q(reviewer=self.request.user)  |
                                                   Q(assign_to=self.request.user))
+
+    def get_permissions(self):
+        if self.action == 'partial_update':
+            permission_classes  = [permissions.IsAuthenticated, IsDevopsPermission]
+        else:
+            permission_classes = [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
 
 
 class RollBackList(APIView):
