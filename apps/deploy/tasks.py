@@ -14,7 +14,7 @@ from common.apis import jenkins_api, dingtalk_chatbot
 from .models import History, ENV, TYPE, HISTORY_STATUS
 from datetime import datetime, timedelta
 from .common import *
-from common.apis import saltapi
+from common.apis import saltapi, gitlab_api
 from common.utils import update_cache_value, update_obj, logger
 
 
@@ -213,6 +213,17 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
             conn.close_if_unusable_or_obsolete()
 
         try:
+            # 获取最新分支信息
+            try:
+                branch_info = gitlab_api.get_branch_info(order_obj.project.gitlab_project, order_obj.branche)
+                commit_id = branch_info.commit.get('id')
+                commit = branch_info.commit.get('message')
+            except Exception as e:
+                logger.exception(e)
+                logger.error('获取分支信息失败')
+                commit_id = order_obj.commit_id
+                commit = order_obj.commit
+
             # 记录日志
             his_obj = History.objects.create(
                 **{
@@ -225,8 +236,8 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
                     'servers_ip': order_obj.servers_ip,
                     'servers_saltID': order_obj.servers_saltID,
                     'branche': order_obj.branche,
-                    'commit_id': order_obj.commit_id,
-                    'commit': order_obj.commit,
+                    'commit_id': commit_id,
+                    'commit': commit,
                     'jk_number': deploy_cache.get('build_number'),
                     'applicant': order_obj.applicant.name,
                     'reviewer': order_obj.reviewer.name,

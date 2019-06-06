@@ -363,5 +363,3 @@ class OAAPI(object):
 
         ret = requests.post(**params)
         return ret.json()
-
-

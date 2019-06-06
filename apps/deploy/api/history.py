@@ -11,14 +11,15 @@ from ..serializers import HistorySerializer
 from ..models import History
 from common.pagination import CustomPagination
 from common.utils import logger
+from ..filters import DeployHistoryFilter
 
 class HistoryViewSet(mixins.ListModelMixin,
                      mixins.RetrieveModelMixin,
                      viewsets.GenericViewSet):
     serializer_class = HistorySerializer
     permission_classes = (permissions.IsAuthenticated,)
-    # filter_class = DeploymentOrderFilter
-    search_fields = ('title', 'project_name')
+    filter_class = DeployHistoryFilter
+    search_fields = ('title',)
     ordering_fields = ('start',)
     pagination_class = CustomPagination
     queryset = History.objects.all()

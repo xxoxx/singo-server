@@ -247,33 +247,10 @@ class Test(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request, format=None):
-        d = DeploymentOrder.objects.get(pk='b200965b-5f92-499b-86fc-bd24511e9ac2')
-        logger.debug(d.title)
-        logger.debug(d.servers_ip)
+        from common.apis import gitlab_api
+        branch = gitlab_api.get_branch_info('cainanjie/devops-server', 'master')
+        print(branch.commit.get('id'))
+        print(branch.commit.get('message'))
         return Response('OK', status=200)
 
-    def post(self, request, format=None):
-        # ret = saltapi.state_sls(['devops', None], **{
-        #     'mods': 'devops-server',
-        #     'saltenv': 'deploy'
-        # })
-        from common.utils import Bcolor
-        print(Bcolor.red('start:{}'.format(time.time())))
-
-        rets = saltapi.state_sls(['minion-1'], **{
-            'pillar':
-                {
-                    'order_id':'ba74e384513f4f63b6643727444a8172',
-                    'env': 2,
-                    'devops_env': 'dev'
-                },
-            'mods': 'devops-server',
-            'saltenv': 'deploy',
-
-        })
-
-        print(Bcolor.green(rets))
-
-
-        return Response('lemon1913', status=200)
 
