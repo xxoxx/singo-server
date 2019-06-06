@@ -27,6 +27,13 @@ class GitlabAPI(object):
                 pass
         return branches
 
+    def get_branch_info(self, path_with_namespace, branch_name):
+        branches = self.get_project_branchs(path_with_namespace)
+        for branch in branches[0]:
+            if branch.name == branch_name:
+                return branch
+        return None
+
 
 gitlab_api = GitlabAPI()
 
