@@ -162,5 +162,5 @@ DEPLOY = {
 }
 
 DINGTALK_CHATBOT = {
-    'URI': 'https://oapi.dingtalk.com/robot/send?access_token=a21a1df49d416fd8cca372a3ce7b3435bd3604f0c1d25779116f96d46bb390b1'
+    'URI': 'https://oapi.dingtalk.com/robot/send?access_token=4eb821a3f60dd2e0fe81b2fe330a12ac830af5856839f71a9e7ddcf005992ffb'
 }
