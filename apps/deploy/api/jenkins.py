@@ -1,13 +1,11 @@
 __author__ = 'singo'
 __datetime__ = '2019/4/26 10:07 AM '
 
-from rest_framework import viewsets, permissions, mixins, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from common.apis import jenkins_api
 from common.utils import logger
-from common.permissions import DevopsPermission
 
 
 class JenkinsJobList(APIView):

@@ -142,7 +142,7 @@ def deploy_state_sls(f, order_obj):
 
     f.write(json.dumps(rets, indent=4))
     logger.debug('salt SLS 执行完成')
-    f.write('> salt SLS 执行完成\n')
+    f.write('\n> salt SLS 执行完成\n')
     f.flush()
 
     brief = deal_with_salt_ret(rets)

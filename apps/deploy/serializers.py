@@ -2,7 +2,7 @@ __author__ = 'singo'
 __datetime__ = '2019/4/26 4:27 PM '
 
 from rest_framework import serializers
-from .models import Project, DeploymentOrder, History
+from .models import Project, DeploymentOrder, History, DeployEnv, DeployItem
 from common.apis import dingtalk_chatbot
 from .common import D_PENDING, D_REJECTED
 
@@ -84,5 +84,28 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
 class HistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = History
+        fields = '__all__'
+        read_only_fields = ['id']
+
+
+class DeployEnvSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeployEnv
+        fields = '__all__'
+        read_only_fields = ['id']
+
+
+class DeployItemSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        ret = super(DeployItemSerializer, self).to_representation(instance)
+        ret['parent_env'] = instance.parent_env.name
+        ret['sub_env'] = instance.sub_env.name if instance.sub_env else None
+        ret['servers'] = [{'id': s.id, 'hostname': s.hostname, 'ip': s._IP, 'saltID':s.saltID} for s in
+                          instance.servers.all()]
+        return ret
+
+    class Meta:
+        model = DeployItem
         fields = '__all__'
         read_only_fields = ['id']

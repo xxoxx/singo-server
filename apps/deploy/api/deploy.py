@@ -138,12 +138,6 @@ class DeployJob(BaseDeployAPIView):
             return Response({'detail': '任务启动失败'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({'detail': '任务已启动'}, status=status.HTTP_200_OK)
-        # return Response({
-        #                     'project_name': order_obj.project.name,
-        #                     'jenkins_job_name': jenkins_job_name,
-        #                     'jenkins_build_number': jenkins_build_number,
-        #                     'type': 'online'
-        #                  })
 
     def get(self, request, pk, format=None):
         order_obj = self.get_object()

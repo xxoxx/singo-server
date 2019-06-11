@@ -37,3 +37,6 @@ class Pots(models.Model):
                                       unique=True, null=False, blank=False)
     node_name = models.CharField(max_length=32, verbose_name='节点名称',
                                  unique=True, null=False, blank=False)
+
+
+

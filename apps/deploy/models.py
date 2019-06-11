@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+from django.core.exceptions import ValidationError
 
 from users.models import User
 from resources.models import Server
@@ -29,6 +30,7 @@ TYPE = (
 class Project(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     name = models.CharField(max_length=64, unique=True, verbose_name='项目名')
+    # servers = models.ManyToManyField(Server, blank=True, verbose_name='主机')
     servers = models.ManyToManyField(Server, blank=True, verbose_name='主机')
     jenkins_job = models.CharField(max_length=128, verbose_name='jenkis job')
     gitlab_project = models.CharField(max_length=128, verbose_name='gitlab project')
@@ -48,16 +50,21 @@ class Project(models.Model):
 class DeploymentOrder(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     title = models.CharField(max_length=128, blank=False, null=False, verbose_name='标题')
-    project = models.ForeignKey(Project, blank=False, null=False, related_name='order', verbose_name='项目')
+    project = models.ForeignKey(Project, blank=False, null=False, related_name='order',
+                                verbose_name='项目',  on_delete=models.PROTECT)
     type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='类型')
     env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
+    # parent_env =
     branche = models.CharField(max_length=64, blank=False, null=False, verbose_name='分支')
     commit_id = models.CharField(max_length=64, blank=False, null=False, verbose_name='commit id')
     commit = models.CharField(max_length=256, blank=False, null=False, verbose_name='git commit')
     content = models.TextField(max_length=512, blank=True, null=True, verbose_name='上线描述及影响')
-    applicant = models.ForeignKey(User, blank=False, null=False, related_name='dmo_applicant', verbose_name='申请人')
-    reviewer = models.ForeignKey(User, blank=False, null=False, related_name='dmo_reviewer', verbose_name='审核人')
-    assign_to = models.ForeignKey(User, null=False, blank=False, related_name='dmo_assigned', verbose_name='上线人')
+    applicant = models.ForeignKey(User, blank=False, null=False, related_name='dmo_applicant',
+                                  verbose_name='申请人',  on_delete=models.PROTECT)
+    reviewer = models.ForeignKey(User, blank=False, null=False, related_name='dmo_reviewer',
+                                 verbose_name='审核人',  on_delete=models.PROTECT)
+    assign_to = models.ForeignKey(User, null=False, blank=False, related_name='dmo_assigned',
+                                  verbose_name='上线人',  on_delete=models.PROTECT)
     apply_time = models.DateTimeField(auto_now_add=True, verbose_name='申请时间')
     complete_time = models.DateTimeField(null=True, verbose_name='结束时间')
     status = models.IntegerField(choices=STATUS, default=D_UNREVIEWED, verbose_name='状态')
@@ -71,7 +78,7 @@ class DeploymentOrder(models.Model):
     # 根据环境获取需要部署的服务器
     @property
     def deploy_servers(self):
-        return [s for s in self.project.servers.all() if s.env == self.env]
+        return [s.saltID for s in self.project.servers.all() if s.env == self.env]
 
     @property
     def servers_ip(self):
@@ -124,3 +131,38 @@ class History(models.Model):
         verbose_name_plural = verbose_name
         ordering = ['-id']
         unique_together = ('order_id', 'deploy_times')
+
+
+def validate_parent(parent):
+    if parent and parent.parent:
+        raise ValidationError(
+            '%(value)s 不是顶级, 只允许关联到顶级',
+            params={'value': parent.name},
+        )
+
+class DeployEnv(models.Model):
+    name = models.CharField(max_length=56, verbose_name='名称', unique=True)
+    code = models.CharField(max_length=56, verbose_name='code')
+    parent = models.ForeignKey('DeployEnv', null=True, validators=[validate_parent])
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '部署环境'
+        verbose_name_plural = verbose_name
+
+def validate_sub(parent):
+    if parent and not parent.parent:
+        raise ValidationError(
+            '%(value)s 是顶级, 只允许关联到子级',
+            params={'value': parent.name},
+        )
+
+class DeployItem(models.Model):
+    name = models.CharField(max_length=56, verbose_name='名称', unique=True)
+    parent_env = models.ForeignKey('DeployEnv', null=False, related_name='deploy_item_parent_env',
+                                   on_delete=models.PROTECT, validators=[validate_parent])
+    sub_env = models.ForeignKey('DeployEnv', null=True, related_name='deploy_item_sub_env',
+                                on_delete=models.PROTECT, validators=[validate_sub])
+    servers = models.ManyToManyField(Server, blank=True, verbose_name='主机')
