@@ -5,13 +5,15 @@ __datetime__ = '2019/5/6 10:12 PM'
 from rest_framework import viewsets, permissions, mixins, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from django.conf import settings
 from django.db.models import Q
+
 
 from common.utils import logger
 from common.permissions import DevopsPermission, DeployPermission, IsDevopsPermission
 from common.pagination import CustomPagination
-from ..serializers import DeploymentOrderSerializer
+from ..serializers import DeploymentOrderSerializer, EnvServersMapSerializer
 from ..filters import DeploymentOrderFilter
 from ..models import DeploymentOrder, History
 from ..common import *
@@ -50,6 +52,26 @@ class DeploymentOrderViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
+
+    # @action(detail=True, methods=['get'], name='deploy-env-servers', url_path='env-servers-map')
+    # def deploy_env_tree(self, request, pk):
+    #     '''
+    #     获取允许发布的主机
+    #     :param request:
+    #     :param pk:
+    #     :return:
+    #     '''
+    #     obj = self.get_object()
+    #     env_code = request.GET.get('env_code')
+    #
+    #     if not env_code:
+    #        return Response([])
+    #
+    #     print(obj.project.project_servers.all())
+    #     queryset = obj.project.project_servers.all().filter(parent_env__code=env_code)
+    #     serializer = EnvServersMapSerializer(queryset, many=True)
+    #
+    #     return Response(serializer.data)
 
 
 

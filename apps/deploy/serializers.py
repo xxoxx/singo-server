@@ -2,10 +2,10 @@ __author__ = 'singo'
 __datetime__ = '2019/4/26 4:27 PM '
 
 from rest_framework import serializers
-from .models import Project, DeploymentOrder, History, DeployEnv, DeployItem
+from .models import Project, DeploymentOrder, History, DeployEnv, EnvServersMap
 from common.apis import dingtalk_chatbot
 from .common import D_PENDING, D_REJECTED
-
+from common.utils import Bcolor
 
 class ProjectSerializer(serializers.ModelSerializer):
     """
@@ -26,8 +26,19 @@ class ProjectSerializer(serializers.ModelSerializer):
                                'id': instance.creator.id,
                                'name': instance.creator.name
                            }
-        ret['servers']= [{'id': s.id, 'hostname':s.hostname, 'ip':s._IP, 'env': s.env}for s in instance.servers.all()]
+        # ret['servers']= [{'id': s.id, 'hostname':s.hostname, 'ip':s._IP, 'env': s.env}for s in instance.servers.all()]
 
+        data = []
+        for env_server_map in instance.project_servers.all():
+            d = {
+                'name': env_server_map.name,
+                'parent_ent': env_server_map.parent_env.name if env_server_map.parent_env else None,
+                'sub_env': env_server_map.sub_env.name if env_server_map.sub_env else None,
+                'servers': [{'id': s.id, 'hostname': s.hostname, 'saltID':s.saltID, 'ip': s._IP, 'env': s.env} for s in
+                            env_server_map.servers.all()]
+            }
+            data.append(d)
+        ret['project_servers'] = data
         return ret
 
 
@@ -50,9 +61,10 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
         # 审核状态变更提醒
         if instance.status == 0 and (status == D_PENDING or status == D_PENDING):
             dingtalk_chatbot.text_msg('你的上线申请有状态变更', at_mobiles=[instance.applicant.phone])
-        instance.status = status
-        instance.save()
-        return instance
+
+        validated_data['status'] = status
+
+        return super(DeploymentOrderSerializer, self).update(instance, validated_data)
 
     def to_representation(self, instance):
         ret = super(DeploymentOrderSerializer, self).to_representation(instance)
@@ -77,8 +89,28 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
             'name': instance.project.name
         }
 
+        data = []
+        for env_server_map in instance.deploy_servers.all():
+            d = {
+                'name': env_server_map.name,
+                'parent_ent': env_server_map.parent_env.name if env_server_map.parent_env else None,
+                'sub_env': env_server_map.sub_env.name if env_server_map.sub_env else None,
+                'servers': [{'id': s.id, 'hostname': s.hostname, 'saltID':s.saltID, 'ip': s._IP, 'env': s.env} for s in
+                            env_server_map.servers.all()]
+            }
+            data.append(d)
+        ret['deploy_servers'] = data
+
         return ret
 
+    def validate(self, data):
+        deploy_servers = data.get('deploy_servers')
+        project_servers = data.get('project').project_servers.all()
+
+        if not set(deploy_servers).issubset(set(project_servers)):
+            raise serializers.ValidationError('部署服务器超出权限范围')
+
+        return data
 
 
 class HistorySerializer(serializers.ModelSerializer):
@@ -95,17 +127,23 @@ class DeployEnvSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
-class DeployItemSerializer(serializers.ModelSerializer):
+class EnvServersMapSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
-        ret = super(DeployItemSerializer, self).to_representation(instance)
+        ret = super(EnvServersMapSerializer, self).to_representation(instance)
         ret['parent_env'] = instance.parent_env.name
         ret['sub_env'] = instance.sub_env.name if instance.sub_env else None
-        ret['servers'] = [{'id': s.id, 'hostname': s.hostname, 'ip': s._IP, 'saltID':s.saltID} for s in
-                          instance.servers.all()]
+        ret['servers'] = [{'id': s.id, 'hostname': s.hostname, 'saltID':s.saltID, 'ip': s._IP}
+                          for s in instance.servers.all()]
         return ret
 
     class Meta:
-        model = DeployItem
+        model = EnvServersMap
         fields = '__all__'
         read_only_fields = ['id']
+
+    def validate(self, data):
+        if data.get('sub_env') and (data.get('parent_env').code != data.get('sub_env').parent.code):
+            raise serializers.ValidationError('子环境必须是父环境的子集')
+        return data
+

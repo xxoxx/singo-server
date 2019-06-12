@@ -31,7 +31,7 @@ class Project(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     name = models.CharField(max_length=64, unique=True, verbose_name='项目名')
     # servers = models.ManyToManyField(Server, blank=True, verbose_name='主机')
-    servers = models.ManyToManyField(Server, blank=True, verbose_name='主机')
+    project_servers = models.ManyToManyField('EnvServersMap', blank=True, verbose_name='关联主机')
     jenkins_job = models.CharField(max_length=128, verbose_name='jenkis job')
     gitlab_project = models.CharField(max_length=128, verbose_name='gitlab project')
     package_url = models.CharField(max_length=128, null=False, blank=False, verbose_name='jenkins 打包路径')
@@ -54,7 +54,6 @@ class DeploymentOrder(models.Model):
                                 verbose_name='项目',  on_delete=models.PROTECT)
     type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='类型')
     env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
-    # parent_env =
     branche = models.CharField(max_length=64, blank=False, null=False, verbose_name='分支')
     commit_id = models.CharField(max_length=64, blank=False, null=False, verbose_name='commit id')
     commit = models.CharField(max_length=256, blank=False, null=False, verbose_name='git commit')
@@ -70,6 +69,8 @@ class DeploymentOrder(models.Model):
     status = models.IntegerField(choices=STATUS, default=D_UNREVIEWED, verbose_name='状态')
     result_msg = models.TextField(blank=True, verbose_name='结果')
     deploy_times = models.IntegerField(default=0, verbose_name='部署次数')
+    deploy_servers = models.ManyToManyField('EnvServersMap', blank=True, verbose_name='发布主机')
+
 
     def __str__(self):
         return self.title
@@ -77,16 +78,16 @@ class DeploymentOrder(models.Model):
 
     # 根据环境获取需要部署的服务器
     @property
-    def deploy_servers(self):
+    def get_deploy_servers(self):
         return [s.saltID for s in self.project.servers.all() if s.env == self.env]
 
     @property
     def servers_ip(self):
-        return ','.join(s._IP for s in self.deploy_servers)
+        return ','.join(s._IP for s in self.get_deploy_servers)
 
     @property
     def servers_saltID(self):
-        return ','.join(s.saltID for s in self.deploy_servers)
+        return ','.join(s.saltID for s in self.get_deploy_servers)
 
     class Meta:
         verbose_name = '上线申请'
@@ -159,10 +160,18 @@ def validate_sub(parent):
             params={'value': parent.name},
         )
 
-class DeployItem(models.Model):
+
+class EnvServersMap(models.Model):
     name = models.CharField(max_length=56, verbose_name='名称', unique=True)
-    parent_env = models.ForeignKey('DeployEnv', null=False, related_name='deploy_item_parent_env',
+    parent_env = models.ForeignKey('DeployEnv', null=False, related_name='servers_parent_env',
                                    on_delete=models.PROTECT, validators=[validate_parent])
-    sub_env = models.ForeignKey('DeployEnv', null=True, related_name='deploy_item_sub_env',
+    sub_env = models.ForeignKey('DeployEnv', null=True, related_name='servers_sub_env',
                                 on_delete=models.PROTECT, validators=[validate_sub])
-    servers = models.ManyToManyField(Server, blank=True, verbose_name='主机')
+    servers = models.ManyToManyField(Server, blank=True, verbose_name='关联主机')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = '关联主机'
+        verbose_name_plural = verbose_name

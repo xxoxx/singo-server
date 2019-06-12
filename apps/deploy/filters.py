@@ -5,7 +5,7 @@ __datetime__ = '2019/4/28 11:11 AM '
 from django_filters import ChoiceFilter, CharFilter, rest_framework, IsoDateTimeFilter
 from django.db import models as django_models
 
-from .models import DeploymentOrder, ENV, STATUS, TYPE, History, HISTORY_STATUS, DeployEnv, DeployItem
+from .models import DeploymentOrder, ENV, STATUS, TYPE, History, HISTORY_STATUS, DeployEnv, EnvServersMap
 
 
 class DeploymentOrderFilter(rest_framework.FilterSet):
@@ -26,14 +26,14 @@ class DeploymentOrderFilter(rest_framework.FilterSet):
         fields = ['project', 'env', 'status', 'type', 'applicant', 'reviewer', 'assign_to']
 
 
-class DeployItemFilter(rest_framework.FilterSet):
-    # parents = DeployEnv.objects.filter(parent=None)
-    parent =  CharFilter(field_name='sub_env__parent__name', label='parent env name')
+class EnvServersMapFilter(rest_framework.FilterSet):
+    parent =  CharFilter(field_name='parent_env__code', label='父环境code')
+    sub =  CharFilter(field_name='sub_env__code', label='子环境code')
     name = CharFilter(lookup_expr='icontains')
 
     class Meta:
-        model = DeployItem
-        fields = ['parent']
+        model = EnvServersMap
+        fields = ['name', 'parent', 'sub']
 
 
 class DeployHistoryFilter(rest_framework.FilterSet):

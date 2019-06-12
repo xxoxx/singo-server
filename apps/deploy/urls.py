@@ -1,6 +1,6 @@
 from django.conf.urls import url, include
 from rest_framework.routers import DefaultRouter
-from .api import gitlab, jenkins, project, deploy, history, order, deploy_env, deploy_item
+from .api import gitlab, jenkins, project, deploy, history, order, deploy_env, env_servers_map
 
 
 
@@ -10,7 +10,7 @@ router.register('projects', project.ProjectViewSet, base_name='projects')
 router.register('deployment-orders', order.DeploymentOrderViewSet, base_name='orders')
 router.register('history', history.HistoryViewSet, base_name='history')
 router.register('deploy-env', deploy_env.DeployEnvViewSet, base_name='deploy-env')
-router.register('deploy-item', deploy_item.DeployItemViewSet, base_name='deploy-item')
+router.register('env-servers', env_servers_map.EnvServersMapViewSet, base_name='env-servers')
 
 urlpatterns = [
     url(r'^', include(router.urls)),
