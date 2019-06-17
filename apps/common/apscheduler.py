@@ -34,7 +34,6 @@ except Exception as e:
 
 
 # 使用 django_apscheduler 调用此方法会导致无限循环
-# def scheduler_run_now(scheduler, *args, **kwargs):
 # @scheduler_run_now(scheduler, 'date')
 def scheduler_run_now(scheduler, *args, **kwargs):
     def wrapper(func):

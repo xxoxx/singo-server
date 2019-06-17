@@ -2,6 +2,9 @@ from rest_framework import permissions
 from rest_framework.permissions import BasePermission
 from rest_framework import exceptions
 from django.core.urlresolvers import resolve
+from datetime import datetime
+
+from deploy.common import ROLLBACK, D_SUCCESSFUL, D_FAILED
 
 class IsSuperuser(BasePermission):
     """
@@ -41,13 +44,29 @@ class DevopsPermission(permissions.BasePermission):
         perms = self.get_required_permissions(request.method, app_label, view.perms_map)
         return request.user.has_perms(perms)
 
-# 发布权限
+# 上线权限
 class DeployPermission(permissions.BasePermission):
     message = '你没有执行发布的权限'
 
     # 超级用户、运维、执行人拥有此权限
     def has_object_permission(self, request, view, obj):
         return request.user.is_superuser or request.user.is_devops or (obj.assign_to == request.user)
+
+# 重新上线权限
+class ReDeployPermission(permissions.BasePermission):
+    message = '超出重新上线的时间'
+
+    # 超级用户、运维、执行人拥有此权限
+    def has_object_permission(self, request, view, obj):
+        # 结单大于12小时不能重新上线
+        if obj.complete_time and (datetime.now() - obj.complete_time).total_seconds() > 12 * 3600:
+            return False
+        # 只有失败和成功状态的上线单才能重新上线
+        elif obj.type == ROLLBACK or (obj.status != D_SUCCESSFUL and obj.status != D_FAILED):
+            self.message = '该工单状态或类型不允许重新上线'
+            return False
+
+        return True
 
 # 是运维返回True
 class IsDevopsPermission(permissions.BasePermission):

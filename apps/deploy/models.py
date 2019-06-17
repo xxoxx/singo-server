@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
 from django.core.exceptions import ValidationError
+from itertools import chain
 
 from users.models import User
 from resources.models import Server
@@ -15,12 +16,6 @@ STATUS = (
     (D_FAILED, '失败')
 )
 
-ENV = (
-    (PRO, '生产环境'),
-    (PRE, '预发布环境'),
-    (TEST, '测试环境')
-)
-
 TYPE = (
     (ONLINE, '上线'),
     (ROLLBACK, '回滚'),
@@ -31,7 +26,7 @@ class Project(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     name = models.CharField(max_length=64, unique=True, verbose_name='项目名')
     # servers = models.ManyToManyField(Server, blank=True, verbose_name='主机')
-    project_servers = models.ManyToManyField('EnvServersMap', blank=True, verbose_name='关联主机')
+    project_maps = models.ManyToManyField('EnvServersMap', blank=True, verbose_name='关联主机')
     jenkins_job = models.CharField(max_length=128, verbose_name='jenkis job')
     gitlab_project = models.CharField(max_length=128, verbose_name='gitlab project')
     package_url = models.CharField(max_length=128, null=False, blank=False, verbose_name='jenkins 打包路径')
@@ -53,7 +48,8 @@ class DeploymentOrder(models.Model):
     project = models.ForeignKey(Project, blank=False, null=False, related_name='order',
                                 verbose_name='项目',  on_delete=models.PROTECT)
     type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='类型')
-    env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
+    # env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
+    env = models.ForeignKey('DeployEnv', blank=False, null=False, verbose_name='部署环境', on_delete=models.PROTECT)
     branche = models.CharField(max_length=64, blank=False, null=False, verbose_name='分支')
     commit_id = models.CharField(max_length=64, blank=False, null=False, verbose_name='commit id')
     commit = models.CharField(max_length=256, blank=False, null=False, verbose_name='git commit')
@@ -69,17 +65,26 @@ class DeploymentOrder(models.Model):
     status = models.IntegerField(choices=STATUS, default=D_UNREVIEWED, verbose_name='状态')
     result_msg = models.TextField(blank=True, verbose_name='结果')
     deploy_times = models.IntegerField(default=0, verbose_name='部署次数')
-    deploy_servers = models.ManyToManyField('EnvServersMap', blank=True, verbose_name='发布主机')
+    deploy_maps = models.ManyToManyField('EnvServersMap', blank=True, verbose_name='部署主机')
 
 
     def __str__(self):
         return self.title
 
+    @property
+    def get_private_vars(self):
+        data = {}
+        for deploy_map in self.deploy_maps.all():
+            for s in deploy_map.servers.all():
+                data[s.saltID] = {'xenv': deploy_map.sub_env.code if deploy_map.sub_env else deploy_map.parent_env.code}
+        return data
 
-    # 根据环境获取需要部署的服务器
+    # 获取服务器
     @property
     def get_deploy_servers(self):
-        return [s.saltID for s in self.project.servers.all() if s.env == self.env]
+        deploy_servers = [deploy_map.servers.all() for deploy_map in self.deploy_maps.all()]
+        return list(chain(*deploy_servers))
+        # return [s.saltID for s in self.project.servers.all() if s.env == self.env]
 
     @property
     def servers_ip(self):
@@ -106,7 +111,8 @@ class History(models.Model):
     deploy_times = models.IntegerField(verbose_name='关联工单部署次数')
     title = models.CharField(max_length=128, verbose_name='标题')
     project_name = models.CharField(max_length=64, verbose_name='项目名')
-    env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
+    # env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
+    env = models.CharField(max_length=32, verbose_name='部署环境')
     type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='类型')
     servers_ip = models.TextField(verbose_name='部署服务器IP')
     servers_saltID = models.TextField(verbose_name='部署服务器saltID')

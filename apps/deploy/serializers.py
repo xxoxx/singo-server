@@ -29,7 +29,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         # ret['servers']= [{'id': s.id, 'hostname':s.hostname, 'ip':s._IP, 'env': s.env}for s in instance.servers.all()]
 
         data = []
-        for env_server_map in instance.project_servers.all():
+        for env_server_map in instance.project_maps.all():
             d = {
                 'name': env_server_map.name,
                 'parent_ent': env_server_map.parent_env.name if env_server_map.parent_env else None,
@@ -38,7 +38,7 @@ class ProjectSerializer(serializers.ModelSerializer):
                             env_server_map.servers.all()]
             }
             data.append(d)
-        ret['project_servers'] = data
+        ret['project_maps'] = data
         return ret
 
 
@@ -90,7 +90,7 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
         }
 
         data = []
-        for env_server_map in instance.deploy_servers.all():
+        for env_server_map in instance.deploy_maps.all():
             d = {
                 'name': env_server_map.name,
                 'parent_ent': env_server_map.parent_env.name if env_server_map.parent_env else None,
@@ -99,15 +99,17 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
                             env_server_map.servers.all()]
             }
             data.append(d)
-        ret['deploy_servers'] = data
+        ret['deploy_maps'] = data
 
         return ret
 
     def validate(self, data):
-        deploy_servers = data.get('deploy_servers')
-        project_servers = data.get('project').project_servers.all()
+        env = data.get('env')
+        deploy_maps = data.get('deploy_maps')
+        # 根据发布环境过滤出project所拥有的env-servers
+        project_maps = data.get('project').project_maps.all().filter(parent_env__code=env.code)
 
-        if not set(deploy_servers).issubset(set(project_servers)):
+        if not set(deploy_maps).issubset(set(project_maps)):
             raise serializers.ValidationError('部署服务器超出权限范围')
 
         return data
@@ -131,8 +133,8 @@ class EnvServersMapSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super(EnvServersMapSerializer, self).to_representation(instance)
-        ret['parent_env'] = instance.parent_env.name
-        ret['sub_env'] = instance.sub_env.name if instance.sub_env else None
+        ret['parent_env'] = {'name': instance.parent_env.name,'id':instance.parent_env.id}
+        ret['sub_env'] = {'id': instance.sub_env.id, 'name': instance.sub_env.name} if instance.sub_env else None
         ret['servers'] = [{'id': s.id, 'hostname': s.hostname, 'saltID':s.saltID, 'ip': s._IP}
                           for s in instance.servers.all()]
         return ret

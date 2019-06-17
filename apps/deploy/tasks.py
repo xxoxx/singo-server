@@ -11,7 +11,7 @@ from django.db import connections
 
 from common.apscheduler import my_scheduler_run_now
 from common.apis import jenkins_api, dingtalk_chatbot
-from .models import History, ENV, TYPE, HISTORY_STATUS
+from .models import History, TYPE, HISTORY_STATUS
 from datetime import datetime, timedelta
 from .common import *
 from common.apis import saltapi, gitlab_api
@@ -19,182 +19,245 @@ from common.utils import update_cache_value, update_obj, logger
 
 
 
+class DeployJob(object):
+    def __init__(self, cache_name, order_obj, assign_to):
+        self.cache_name = cache_name
+        self.order_obj = order_obj
+        self.deploy_cache = cache.get(cache_name, {})
+        self.his_obj = None
+        self.f = None
+        self.assign_to = assign_to
+        # 设置第几次执行上线单
+        self.order_obj.deploy_times += 1
 
-def jenkins_log(f, job_name, build_number, line_number):
-    log = jenkins_api.get_build_console_output(job_name, build_number)
-    log = log.splitlines()
-    f.write('\n'.join(log[line_number:]))
+        for conn in connections.all():
+            conn.close_if_unusable_or_obsolete()
 
-    if (len(log) > line_number):
-        f.write('\n')
-
-    f.flush()
-    return len(log)
-
-def set_step_cache(cache_name, deploy_cache):
-    deploy_cache['current_step'] += 1
-    cache.set(cache_name, deploy_cache, timeout=CACHE_TIMEOUT)
-    logger.debug(str(deploy_cache))
-
-def deal_with_salt_ret(rets):
-    """
-    判断sls是否执行成功
-    :param rets:
-    :return: {'saltid':bool,...}
-    """
-    brief = {}
-    rets = rets.get('return', [])
-
-    for ret in rets:
+    def init_job(self):
+        # 上线工单需要获取最新分支信息
         try:
-            for salt_id, contents in ret.items():
-                try:
-                    for content in contents.values():
-                        if content.get('result') and content.get('__id__') == 'finally':
-                            brief[salt_id] = True
-                            break
-                except:
-                    brief[salt_id] = False
-        except:
-            continue
-    return brief
+            if self.order_obj.type != ROLLBACK:
+                branch_info = gitlab_api.get_branch_info(self.order_obj.project.gitlab_project, self.order_obj.branche)
+                commit_id = branch_info.commit.get('id')
+                commit = branch_info.commit.get('message')
+            else:
+                raise Exception
+        except Exception as e:
+            logger.exception(e)
+            commit_id = self.order_obj.commit_id
+            commit = self.order_obj.commit
 
+        self.f = open(self.deploy_cache.get('log'), 'a')
+        # 记录日志
+        self.his_obj = History.objects.create(
+            **{
+                'order_id': self.order_obj.id,
+                'deploy_times': self.order_obj.deploy_times,
+                'title': self.order_obj.title,
+                'project_name': self.order_obj.project.name,
+                'env': self.order_obj.env.name,
+                'type': self.order_obj.type,
+                'servers_ip': self.order_obj.servers_ip,
+                'servers_saltID': self.order_obj.servers_saltID,
+                'branche': self.order_obj.branche,
+                'commit_id': commit_id,
+                'commit': commit,
+                'jk_number': -1,
+                'applicant': self.order_obj.applicant.name,
+                'reviewer': self.order_obj.reviewer.name,
+                'assign_to': self.assign_to,
+                'log_file': self.deploy_cache.get('log'),
+                'result': H_UNKNOWN
+            }
+        )
 
-# 构建
-def build(f, cache_name, deploy_cache, his_obj):
-    logger.debug('开始构建项目')
-    f.write('> 开始构建项目\n')
-    f.flush()
+    def __jenkins_log(self, job_name, build_number, line_number):
+        log = jenkins_api.get_build_console_output(job_name, build_number)
+        log = log.splitlines()
+        self.f.write('\n'.join(log[line_number:]))
 
-    line_number = 0
-    set_step_cache(cache_name, deploy_cache)
-    job_name = deploy_cache['job_name']
-    build_number = deploy_cache['build_number']
-    queue_id = deploy_cache.get('queue_id')
+        if (len(log) > line_number):
+            self.f.write('\n')
 
-    # 最多等待 jenkins 20分
-    for i in range(240):
-        time.sleep(5)
-        build_info = jenkins_api.get_build_info(job_name, build_number)
+        self.f.flush()
+        return len(log)
 
-        if build_info and queue_id != build_info.get('queueId'):
-            raise Exception('获取jenkins build number 失败')
-        # 构建中
-        elif build_info and build_info.get('building') == True:
-            logger.debug('构建中')
-            # 获取jenkins日志
-            line_number = jenkins_log(f, job_name, build_number, line_number)
-            continue
-        # 构建成功
-        elif build_info and build_info.get('building') == False and build_info.get('result') == 'SUCCESS':
-            logger.debug('构建完成')
-            jenkins_log(f, job_name, build_number, line_number)
-            update_obj(his_obj, **{'jk_result': build_info.get('result')})
-            break
-        # 构建失败
-        elif build_info and build_info.get('building') == False and build_info.get('result') != 'SUCCESS':
-            logger.debug('构建失败')
-            jenkins_log(f, job_name, build_number, line_number)
-            update_obj(his_obj, **{'jk_result': build_info.get('result')})
-            raise Exception('构建失败')
-        # 构建未开始
+    def __deal_with_salt_ret(self,rets):
+        """
+        判断sls是否执行成功
+        :param rets:
+        :return: {'saltid':bool,...}
+        """
+        brief = {}
+        rets = rets.get('return', [])
+
+        for ret in rets:
+            try:
+                for salt_id, contents in ret.items():
+                    try:
+                        for content in contents.values():
+                            if content.get('result') and content.get('__id__') == 'finally':
+                                brief[salt_id] = True
+                                break
+                    except:
+                        brief[salt_id] = False
+            except:
+                continue
+        return brief
+
+    @staticmethod
+    def set_step_cache(cache_name, deploy_cache):
+        deploy_cache['current_step'] += 1
+        cache.set(cache_name, deploy_cache, timeout=CACHE_TIMEOUT)
+        logger.debug(str(deploy_cache))
+
+    # 构建
+    def build(self):
+        # 回滚需要先从历史记录获取jenkins的build_number
+        if self.order_obj.type == ROLLBACK:
+            try:
+                history = History.objects.get(pk=self.order_obj.content)
+                build_number = history.jk_number
+            except:
+                raise Exception('获取回滚版本信息失败')
         else:
-            logger.debug('等待jenkins创建任务')
+            logger.debug('开始构建项目')
+            self.f.write('> 开始构建项目\n')
+            self.f.flush()
 
-    f.write('> 构建完成\n')
-    f.flush()
+            line_number = 0
+            job_name = self.order_obj.project.jenkins_job
+            build_number = jenkins_api.get_next_build_number(job_name)
+            queue_id = jenkins_api.build_job(job_name, parameters={'BRANCH': self.order_obj.branche,
+                                                                   'ENV':  self.order_obj.env.code})
 
-# 下载代码包
-def download_package(f, cache_name, deploy_cache, order_obj):
-    logger.debug('开始下载代码')
-    f.write('> 开始下载代码\n')
-    f.flush()
+            update_cache_value(self.cache_name, self.deploy_cache, **{'build_number': build_number})
+            self.set_step_cache(self.cache_name, self.deploy_cache)
 
-    build_number = deploy_cache['build_number']
+            # 最多等待 jenkins 20分
+            for i in range(240):
+                time.sleep(5)
+                build_info = jenkins_api.get_build_info(job_name, build_number)
 
-    set_step_cache(cache_name, deploy_cache)
-    jenkins_api.download_package(order_obj.project.package_url,
-                                 order_obj.project.jenkins_job,
-                                 build_number)
+                if build_info and queue_id != build_info.get('queueId'):
+                    raise Exception('获取jenkins build number 失败')
+                # 构建中
+                elif build_info and build_info.get('building') == True:
+                    logger.debug('构建中')
+                    # 获取jenkins日志
+                    line_number = self.__jenkins_log(job_name, build_number, line_number)
+                    continue
+                # 构建成功
+                elif build_info and build_info.get('building') == False and build_info.get('result') == 'SUCCESS':
+                    logger.debug('构建完成')
+                    self.__jenkins_log(job_name, build_number, line_number)
+                    update_obj(self.his_obj, **{'jk_result': build_info.get('result')})
+                    break
+                # 构建失败
+                elif build_info and build_info.get('building') == False and build_info.get('result') != 'SUCCESS':
+                    logger.debug('构建失败')
+                    self.__jenkins_log(job_name, build_number, line_number)
+                    update_obj(self.his_obj, **{'jk_result': build_info.get('result')})
+                    raise Exception('构建失败')
+                # 构建未开始
+                else:
+                    logger.debug('等待jenkins创建任务')
+            self.f.write('> 构建完成\n')
+            self.f.flush()
 
-    logger.debug('代码下载完成')
-    f.write('> 代码下载完成\n')
-    f.flush()
+        update_obj(self.his_obj, **{'jk_number': build_number})
 
-# 执行sls文件
-def deploy_state_sls(f, order_obj):
-    logger.debug('开始执行salt SLS')
-    f.write('> 开始执行salt SLS\n')
-    f.flush()
+    # 下载代码包
+    def download_package(self):
+        logger.debug('开始下载代码')
+        self.f.write('> 开始下载代码\n')
+        self.f.flush()
 
-    salt_id_list = [s.saltID for s in order_obj.deploy_servers]
+        build_number = self.deploy_cache['build_number']
 
-    rets = saltapi.state_sls(salt_id_list, **{
-        'pillar':
-            {   'project': order_obj.project.name,
-                'order_id': str(order_obj.id),
-                'env': S_ENV[order_obj.env][1],
-                'devops_env': settings.ENV
-            },
-        'mods': order_obj.project.name,
-        'saltenv': 'deploy',
-    })
+        self.set_step_cache(self.cache_name, self.deploy_cache)
+        jenkins_api.download_package(self.order_obj.project.package_url,
+                                     self.order_obj.project.jenkins_job,
+                                     build_number)
 
-    f.write(json.dumps(rets, indent=4))
-    logger.debug('salt SLS 执行完成')
-    f.write('\n> salt SLS 执行完成\n')
-    f.flush()
+        logger.debug('代码下载完成')
+        self.f.write('> 代码下载完成\n')
+        self.f.flush()
 
-    brief = deal_with_salt_ret(rets)
+    # 执行sls文件
+    def deploy_state_sls(self):
+        logger.debug('开始执行salt SLS')
+        self.f.write('> 开始执行salt SLS\n')
+        self.f.flush()
 
-    for salt_id in salt_id_list:
-        if brief.get(salt_id, 'default') == 'default':
-            brief[salt_id] = False
+        salt_id_list = [s.saltID for s in self.order_obj.get_deploy_servers]
 
-    failed_salt = [k for k, v in brief.items() if v == False]
+        rets = saltapi.state_sls(salt_id_list, **{
+            'pillar':
+                {'project': self.order_obj.project.name,
+                 'order_id': str(self.order_obj.id),
+                 'env': self.order_obj.env.code,
+                 'devops_env': settings.ENV,
+                 'private_vars': self.order_obj.get_private_vars
+                 },
+            'mods': self.order_obj.project.name,
+            'saltenv': 'deploy'
+        })
 
-    if failed_salt:
-        raise Exception('{}执行salt sls失败'.format(','.join(failed_salt)))
+        self.f.write(json.dumps(rets, indent=4))
+        logger.debug('salt SLS 执行完成')
+        self.f.write('\n> salt SLS 执行完成\n')
+        self.f.flush()
 
-# 部署完成后的状态处理
-def end_job(f, cache_name, order_obj, his_obj, order_data=None, his_data=None, cache_data=None, write_msg=''):
-    deploy_cache = cache.get(cache_name, {})
+        brief = self.__deal_with_salt_ret(rets)
 
-    update_obj(order_obj, **order_data)
-    update_cache_value(cache_name, deploy_cache, **cache_data)
-    his_obj and update_obj(his_obj, **his_data)
+        for salt_id in salt_id_list:
+            if brief.get(salt_id, 'default') == 'default':
+                brief[salt_id] = False
 
-    if f:
-        f.write('> {}\nEOF'.format(write_msg))
-        f.flush()
-        f.close()
+        failed_salt = [k for k, v in brief.items() if v == False]
+
+        if failed_salt:
+            raise Exception('{}执行salt sls失败'.format(','.join(failed_salt)))
+
+    # 部署完成后的状态处理
+    def end_job(self, order_data=None, his_data=None, cache_data=None, write_msg=''):
+        deploy_cache = cache.get(self.cache_name, {})
+
+        update_obj(self.order_obj, **order_data)
+        update_cache_value(self.cache_name, deploy_cache, **cache_data)
+        self.his_obj and update_obj(self.his_obj, **his_data)
+
+        if self.f:
+            self.f.write('> {}\nEOF'.format(write_msg))
+            self.f.flush()
+            self.f.close()
+
 
 def timing(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         try:
             order_obj = args[1]
-            dingtalk_chatbot.text_msg('{}开始{} {}'.format(ENV[order_obj.env][1],
+            dingtalk_chatbot.text_msg('{}开始{} {}'.format(order_obj.env.name,
                                                         TYPE[order_obj.type][1],
                                                         order_obj.project.name)
                                       )
-            # realtime_log_url = '{}/log.html?id={}'.format(settings.FRONT_END_URL, order_obj.id)
             realtime_log_url = '{}/deploy/log/{}'.format(settings.FRONT_END_URL, order_obj.id)
             dingtalk_chatbot.send_link('实时日志', '点击查看日志', realtime_log_url)
         except Exception as e:
             logger.exception(e)
 
         start = time.time()
-        f(*args, **kwargs)
+        ret = f(*args, **kwargs)
+        s_ret = '成功' if ret else '失败'
         end = time.time()
         elapsed_time = round((end - start), 0)
 
-        his_obj = History.objects.get(order_id=order_obj.id, deploy_times=order_obj.deploy_times)
-
-        dingtalk_chatbot.text_msg('{}{}{}{},耗时 {}'.format(ENV[order_obj.env][1],
+        dingtalk_chatbot.text_msg('{}{}{}{},耗时 {}'.format(order_obj.env.name,
                                                                 order_obj.project.name,
                                                                 TYPE[order_obj.type][1],
-                                                                HISTORY_STATUS[his_obj.result][1],
+                                                                s_ret,
                                                                 timedelta(seconds=elapsed_time))
                                   )
     return wrapper
@@ -203,82 +266,36 @@ def timing(f):
 @timing
 def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
     try:
-        # 设置第几次执行上线单
-        order_obj.deploy_times += 1
-        deploy_cache = cache.get(cache_name, {})
-        his_obj = None
-        f = None
+        deploy_job = DeployJob(cache_name, order_obj, assign_to)
 
-        for conn in connections.all():
-            conn.close_if_unusable_or_obsolete()
+        deploy_job.init_job()
 
-        try:
-            # 获取最新分支信息
-            try:
-                branch_info = gitlab_api.get_branch_info(order_obj.project.gitlab_project, order_obj.branche)
-                commit_id = branch_info.commit.get('id')
-                commit = branch_info.commit.get('message')
-            except Exception as e:
-                logger.exception(e)
-                logger.error('获取分支信息失败')
-                commit_id = order_obj.commit_id
-                commit = order_obj.commit
-
-            # 记录日志
-            his_obj = History.objects.create(
-                **{
-                    'order_id': order_obj.id,
-                    'deploy_times': order_obj.deploy_times,
-                    'title': order_obj.title,
-                    'project_name': order_obj.project.name,
-                    'env': order_obj.env,
-                    'type': order_obj.type,
-                    'servers_ip': order_obj.servers_ip,
-                    'servers_saltID': order_obj.servers_saltID,
-                    'branche': order_obj.branche,
-                    'commit_id': commit_id,
-                    'commit': commit,
-                    'jk_number': deploy_cache.get('build_number'),
-                    'applicant': order_obj.applicant.name,
-                    'reviewer': order_obj.reviewer.name,
-                    'assign_to': assign_to,
-                    'log_file': deploy_cache.get('log'),
-                }
-            )
-
-            f = open(deploy_cache.get('log'), 'a')
-
-        except Exception as e:
-            jenkins_api.cancel_build(deploy_cache.get('job_name'), deploy_cache.get('queue_id'), deploy_cache.get('build_number'))
-            raise e
-
-
-        if order_obj.type != ROLLBACK:
-            #################jenkins构建################
-            build(f, cache_name, deploy_cache, his_obj)
+        #################jenkins构建################
+        deploy_job.build()
 
         ###################下载代码##################
-        download_package(f, cache_name, deploy_cache, order_obj)
+        deploy_job.download_package()
 
         ##################执行SLS文件################
-        deploy_state_sls(f, order_obj)
+        deploy_job.deploy_state_sls()
 
         ##################完成发布################
-        end_job(f, cache_name, order_obj, his_obj,
-                order_data={'status': D_SUCCESSFUL, 'result_msg': '上线完成', 'complete_time': datetime.now()},
+        deploy_job.end_job(order_data={'status': D_SUCCESSFUL, 'result_msg': '上线完成', 'complete_time': datetime.now()},
                 his_data={'result': H_SUCCESSFUL, 'end': datetime.now()},
                 cache_data={'is_lock': False, 'status': S_SUCCESSFUL},
                 write_msg='部署成功'
                 )
 
+        return True
+
     except Exception as e:
         logger.exception(e)
-        end_job(f, cache_name, order_obj, his_obj,
-                order_data={'status': D_FAILED, 'result_msg': str(e), 'complete_time': datetime.now()},
+        deploy_job.end_job(order_data={'status': D_FAILED, 'result_msg': str(e), 'complete_time': datetime.now()},
                 his_data={'result': H_FAILED, 'error_msg': str(e), 'end': datetime.now()},
                 cache_data={'is_lock': False, 'status': S_FAILED},
                 write_msg='部署失败'
                 )
+        return False
 
 
 # def timing(*args, **kwargs):

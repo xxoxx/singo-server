@@ -29,7 +29,6 @@ class SaltAPI(object):
             self.get_token()
 
     def post(self, headers=None, data=None, json=None, prefix='/'):
-
         salt_token = cache.get('salt-token')
         logger.debug('{}:{}'.format(self.__token, self.__token_expire))
         logger.debug(salt_token)
@@ -333,7 +332,7 @@ class SaltAPI(object):
 
         ret = self.post(json=data)
         if ret:
-            logger.debug(ret.json())
+            # logger.debug(ret.json())
             return ret.json()
         else:
             return {'return': [{}]}

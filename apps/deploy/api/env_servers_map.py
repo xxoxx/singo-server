@@ -20,4 +20,12 @@ class EnvServersMapViewSet(viewsets.ModelViewSet):
     search_fields = ('name',)
     ordering_fields = ('id',)
 
+    def list(self, request, *args, **kwargs):
+        # 不需要分页
+        if self.request.GET.get('all') == 'true':
+            serializer = self.get_serializer(self.queryset, many=True)
+            return Response(serializer.data)
+        else:
+            return super(EnvServersMapViewSet, self).list(request, *args, **kwargs)
+
 

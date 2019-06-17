@@ -10,16 +10,80 @@ from django.core.cache import cache
 from django.conf import settings
 import os, time, linecache
 from rest_framework.exceptions import APIException
-from datetime import datetime
 
 from common.utils import logger, update_cache_value, update_obj
-from common.permissions import DevopsPermission, DeployPermission, IsDevopsPermission
+from common.permissions import DevopsPermission, DeployPermission, IsDevopsPermission, ReDeployPermission
 from ..models import DeploymentOrder
-from common.apis import jenkins_api, saltapi
-from ..tasks import start_job, set_step_cache
+from common.apis import saltapi
+from ..tasks import start_job, DeployJob
 from ..common import *
-from ..models import History
 
+
+class DeployAPI(object):
+    def __init__(self, order_obj, login_user):
+        self.order_obj = order_obj
+        self.login_user = login_user
+        self.cache_name = 'deploy-{}'.format(order_obj.project.name)
+
+    def __init_deploy(self):
+        deploy_path = settings.DEPLOY.get('CODE_PATH')
+        deploy_cache = cache.get(self.cache_name, {})
+        # 监测工单是否处于发布状态
+        self.__check_deploy(self.order_obj, deploy_cache)
+        # 锁定上线
+        cache.set(self.cache_name, {'is_lock': True}, timeout=CACHE_TIMEOUT)
+        # 获取步骤
+        steps, step_size = self.__get_steps(self.order_obj, deploy_path)
+
+        deploy_cache = {
+                          'job_name': self.order_obj.project.jenkins_job,
+                          'status': S_RUNNING,
+                          'is_lock': True,
+                          'log': os.path.join(deploy_path, 'logs', str(time.time())),
+                          'current_step': 1,
+                          'step_size': step_size,
+                          'steps': steps
+                  }
+
+        cache.set(self.cache_name, deploy_cache, timeout=CACHE_TIMEOUT)
+
+    # 检测是否在发布状态
+    def __check_deploy(self, order_obj, deploy_cache):
+        # 避免被重复执行部署
+        if deploy_cache.get('is_lock'):
+            raise DeployError('该任务已经启动')
+        elif order_obj.status != 1:
+            raise DeployError('该工单状态不能上线')
+        return True
+
+    # 获取发布步骤名称及步骤总数
+    def __get_steps(self, order_obj, deploy_path):
+        minion = settings.DEPLOY.get('M_MINION')
+        steps = ['init job', 'build', 'download package'] if order_obj.type != ROLLBACK else ['init job', 'download package']
+        # 根据sls文件来获取步骤
+        sls_file = os.path.join(deploy_path, order_obj.project.name, 'init.sls')
+        cmd = "grep -o desc:.*$ {}|awk -F \"'\" '{{print $2}}'".format(sls_file)
+        ret = saltapi.cmd_run(minion, arg=cmd)
+        desc = ret['return'][0][minion]
+        step_size = len(steps)+len(desc.split('\n'))*len(order_obj.get_deploy_servers)
+        steps.extend(desc.split('\n'))
+
+        return steps, step_size
+
+    def start_deploy(self):
+        self.__init_deploy()
+        start_job(self.cache_name, self.order_obj, self.login_user)
+        # 设置发布状态
+        update_obj(self.order_obj, status=D_RUNNING)
+
+    def restart_deploy(self):
+        self.order_obj.status = D_PENDING
+        self.order_obj.type = REONLONE if self.order_obj.type != ROLLBACK else ROLLBACK
+        self.start_deploy()
+        # self.__init_deploy()
+        # start_job(self.cache_name, self.order_obj, self.login_user)
+        # # 设置发布状态
+        # update_obj(self.order_obj, status=D_RUNNING)
 
 
 class DeployError(APIException):
@@ -29,14 +93,13 @@ class DeployError(APIException):
 
 
 class BaseDeployAPIView(APIView):
-
     def get_object(self):
         obj = get_object_or_404(DeploymentOrder, pk=self.kwargs.get('pk'))
         self.check_object_permissions(self.request, obj)
         return obj
 
 
-class DeployJob(BaseDeployAPIView):
+class DeployAPIView(BaseDeployAPIView):
     """
     项目上线
 
@@ -48,93 +111,20 @@ class DeployJob(BaseDeployAPIView):
     """
     permission_classes = (permissions.IsAuthenticated, DeployPermission)
 
-
-    def check_deploy(self, order_obj, deploy_cache):
-        # 避免被重复执行部署
-        if deploy_cache.get('is_lock'):
-            raise DeployError('该任务已经启动')
-        elif order_obj.status != 1:
-            raise DeployError('该工单状态不能上线')
-        return True
-
-
-    def __init_jenkins(self, order_obj, jenkins_job_name):
-        if order_obj.type != ROLLBACK:
-            build_number = jenkins_api.get_next_build_number(jenkins_job_name)
-            queue_id = jenkins_api.build_job(jenkins_job_name, parameters={'BRANCH': order_obj.branche, 'ENV':S_ENV[order_obj.env][1]})
-        else:
-            try:
-                history = History.objects.get(pk=order_obj.content)
-                build_number = history.jk_number
-                queue_id = -1
-            except:
-                raise Exception('获取回滚版本失败')
-        return build_number, queue_id
-
-
-    def __get_steps(self, order_obj, deploy_path):
-        minion = settings.DEPLOY.get('M_MINION')
-        steps = ['init job', 'build', 'download package'] if order_obj.type != ROLLBACK else ['init job', 'download package']
-
-        # 根据sls文件来获取步骤
-        sls_file = os.path.join(deploy_path, order_obj.project.name, 'init.sls')
-        cmd = "grep -o desc:.*$ {}|awk -F \"'\" '{{print $2}}'".format(sls_file)
-        ret = saltapi.cmd_run(minion, arg=cmd)
-        desc = ret['return'][0][minion]
-        step_size = len(steps)+len(desc.split('\n'))*len(order_obj.deploy_servers)
-        steps.extend(desc.split('\n'))
-
-        return steps, step_size
-
-    def init_deploy(self, cache_name, order_obj):
-        deploy_path = settings.DEPLOY.get('CODE_PATH')
-        jenkins_job_name = order_obj.project.jenkins_job
-        deploy_cache = cache.get(cache_name, {})
-
-        # 监测工单是否处于发布状态
-        self.check_deploy(order_obj, deploy_cache)
-        # 锁定上线
-        cache.set(cache_name, {'is_lock': True}, timeout=CACHE_TIMEOUT)
-        # 初始化jenkins
-        build_number, queue_id = self.__init_jenkins(order_obj, jenkins_job_name)
-        # 获取步骤
-        steps, step_size = self.__get_steps(order_obj, deploy_path)
-
-        deploy_cache = {
-                          'job_name': order_obj.project.jenkins_job,
-                          'status': S_RUNNING,
-                          'build_number': build_number,
-                          'is_lock': True,
-                          'queue_id': queue_id,
-                          'log': os.path.join(deploy_path, 'logs', str(time.time())),
-                          'current_step': 1,
-                          'step_size': step_size,
-                          'steps': steps
-
-                  }
-
-        cache.set(cache_name, deploy_cache, timeout=CACHE_TIMEOUT)
-
-        return build_number
-
-    def start_deploy(self, cache_name, order_obj, assign_to):
-        self.init_deploy(cache_name, order_obj)
-        start_job(cache_name, order_obj, assign_to)
-        # 设置发布状态
-        update_obj(order_obj, status=D_RUNNING)
-
-
     def post(self, request, pk, format=None):
         order_obj = self.get_object()
         try:
-            cache_name = 'deploy-{}'.format(order_obj.project.name)
-            self.start_deploy(cache_name, order_obj, request.user.name)
+
+            # cache_name = 'deploy-{}'.format(order_obj.project.name)
+            # self.start_deploy(cache_name, order_obj, request.user.name)
+            deploy = DeployAPI(order_obj, request.user.name)
+            deploy.start_deploy()
         except DeployError as e:
             logger.exception(e)
-            raise DeployError(e)
+            return Response({'detail': e.detail}, status=status.HTTP_200_OK)
         except Exception as e:
-            update_cache_value(cache_name, **{'is_lock': False, 'status': S_FAILED})
             logger.exception(e)
+            update_cache_value(deploy.cache_name, **{'is_lock': False, 'status': S_FAILED})
             return Response({'detail': '任务启动失败'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({'detail': '任务已启动'}, status=status.HTTP_200_OK)
@@ -146,42 +136,25 @@ class DeployJob(BaseDeployAPIView):
         return Response(data)
 
 
-class RedeployJob(DeployJob):
+class RedeployAPIView(DeployAPIView):
     """
     重新上线
     """
-    permission_classes = (permissions.IsAuthenticated, IsDevopsPermission)
-
-    def check_deploy(self, order_obj, deploy_cache):
-        # 结单大于12小时不能重新上线
-        if order_obj.complete_time and (datetime.now() - order_obj.complete_time).total_seconds() > 12 * 3600:
-            raise DeployError('超出重新上线的时间', 400)
-        # 只有失败和成功状态的上线单才能重新上线
-        elif order_obj.type == ROLLBACK or (order_obj.status != D_SUCCESSFUL and order_obj.status != D_FAILED):
-            raise DeployError('该工单状态或类型不允许重新上线', 400)
-        elif deploy_cache.get('is_lock'):
-            raise DeployError('该任务已经启动')
-
-    def start_deploy(self, cache_name, order_obj, assign_to):
-        # 设置工单类型和状态
-        # update_obj(order_obj, **{'status': D_PENDING, 'type': REONLONE})
-
-        order_obj.type = REONLONE if order_obj.type != ROLLBACK else ROLLBACK
-        super(RedeployJob, self).start_deploy(cache_name, order_obj, assign_to)
+    permission_classes = (permissions.IsAuthenticated, IsDevopsPermission, ReDeployPermission)
 
     def post(self, request, pk, format=None):
         order_obj = self.get_object()
         o_status = order_obj.status
         o_type = order_obj.type
         try:
-            cache_name = 'deploy-{}'.format(order_obj.project.name)
-            self.start_deploy(cache_name, order_obj, request.user.name)
+            deploy = DeployAPI(order_obj, request.user.name)
+            deploy.restart_deploy()
         except DeployError as e:
             logger.exception(e)
-            raise DeployError(e)
+            return Response({'detail': e.detail}, status=status.HTTP_200_OK)
         except Exception as e:
             update_obj(order_obj, **{'status': o_status, 'type': o_type})
-            update_cache_value(cache_name, **{'is_lock': False, 'status': S_FAILED})
+            update_cache_value(deploy.cache_name, **{'is_lock': False, 'status': S_FAILED})
             logger.exception(e)
             return Response({'detail': '任务启动失败'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -229,7 +202,7 @@ class SaltStateSLSWebhook(BaseDeployAPIView):
             if not deploy_cache or not deploy_cache.get('is_lock'):
                 raise Exception
 
-            set_step_cache(cache_name, deploy_cache)
+            DeployJob.set_step_cache(cache_name, deploy_cache)
 
             return Response(status=status.HTTP_200_OK)
         except Exception as e:
@@ -241,10 +214,17 @@ class Test(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request, format=None):
-        from common.apis import gitlab_api
-        branch = gitlab_api.get_branch_info('cainanjie/devops-server', 'master')
-        print(branch.commit.get('id'))
-        print(branch.commit.get('message'))
+        saltapi.state_sls('devops', **{
+            'pillar':
+                {'project': 'devops-server',
+                 'order_id': 'ba74e384-513f-4f63-b664-3727444a8172',
+                 'env': 'test',
+                 'devops_env': settings.ENV,
+                 'private_vars': {'devops': {'xenv': '1111111'}}
+                 },
+            'mods': 'devops-server',
+            'saltenv': 'deploy'
+        })
         return Response('OK', status=200)
 
 

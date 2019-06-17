@@ -5,7 +5,7 @@ __datetime__ = '2019/4/28 11:11 AM '
 from django_filters import ChoiceFilter, CharFilter, rest_framework, IsoDateTimeFilter
 from django.db import models as django_models
 
-from .models import DeploymentOrder, ENV, STATUS, TYPE, History, HISTORY_STATUS, DeployEnv, EnvServersMap
+from .models import DeploymentOrder, STATUS, TYPE, History, HISTORY_STATUS, DeployEnv, EnvServersMap
 
 
 class DeploymentOrderFilter(rest_framework.FilterSet):
@@ -14,9 +14,9 @@ class DeploymentOrderFilter(rest_framework.FilterSet):
     '''
 
     project = CharFilter(field_name='project__name', lookup_expr='icontains')
-    env = ChoiceFilter(choices=ENV)
-    status = ChoiceFilter(choices=STATUS)
-    type = ChoiceFilter(choices=TYPE)
+    # env = ChoiceFilter(choices=ENV)
+    # status = ChoiceFilter(choices=STATUS)
+    # type = ChoiceFilter(choices=TYPE)
     applicant = CharFilter(field_name='applicant__name', lookup_expr='icontains')
     reviewer = CharFilter(field_name='reviewer__name', lookup_expr='icontains')
     assign_to = CharFilter(field_name='assign_to__name', lookup_expr='icontains')
@@ -38,7 +38,7 @@ class EnvServersMapFilter(rest_framework.FilterSet):
 
 class DeployHistoryFilter(rest_framework.FilterSet):
     project_name = CharFilter(lookup_expr='icontains')
-    env = ChoiceFilter(choices=ENV)
+    env = CharFilter(lookup_expr='icontains')
     result = ChoiceFilter(choices=HISTORY_STATUS)
     type = ChoiceFilter(choices=TYPE)
 

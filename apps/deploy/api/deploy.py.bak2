@@ -20,6 +20,15 @@ from ..tasks import start_job, set_step_cache
 from ..common import *
 from ..models import History
 
+class Deploy(object):
+    def __init__(self, order_obj, login_user):
+        self.order_obj = order_obj
+        self.login_user = login_user
+        self.cache_name = 'deploy-{}'.format(order_obj.project.name)
+
+        print(order_obj.title)
+        print(self.login_user)
+
 
 
 class DeployError(APIException):
@@ -61,7 +70,7 @@ class DeployJob(BaseDeployAPIView):
     def __init_jenkins(self, order_obj, jenkins_job_name):
         if order_obj.type != ROLLBACK:
             build_number = jenkins_api.get_next_build_number(jenkins_job_name)
-            queue_id = jenkins_api.build_job(jenkins_job_name, parameters={'BRANCH': order_obj.branche, 'ENV':S_ENV[order_obj.env][1]})
+            queue_id = jenkins_api.build_job(jenkins_job_name, parameters={'BRANCH': order_obj.branche, 'ENV':order_obj.env.code})
         else:
             try:
                 history = History.objects.get(pk=order_obj.content)
@@ -81,7 +90,7 @@ class DeployJob(BaseDeployAPIView):
         cmd = "grep -o desc:.*$ {}|awk -F \"'\" '{{print $2}}'".format(sls_file)
         ret = saltapi.cmd_run(minion, arg=cmd)
         desc = ret['return'][0][minion]
-        step_size = len(steps)+len(desc.split('\n'))*len(order_obj.deploy_servers)
+        step_size = len(steps)+len(desc.split('\n'))*len(order_obj.get_deploy_servers)
         steps.extend(desc.split('\n'))
 
         return steps, step_size
@@ -127,13 +136,14 @@ class DeployJob(BaseDeployAPIView):
     def post(self, request, pk, format=None):
         order_obj = self.get_object()
         try:
-            cache_name = 'deploy-{}'.format(order_obj.project.name)
-            self.start_deploy(cache_name, order_obj, request.user.name)
+            # cache_name = 'deploy-{}'.format(order_obj.project.name)
+            # self.start_deploy(cache_name, order_obj, request.user.name)
+            deploy = Deploy(order_obj, request.user.name)
         except DeployError as e:
             logger.exception(e)
             raise DeployError(e)
         except Exception as e:
-            update_cache_value(cache_name, **{'is_lock': False, 'status': S_FAILED})
+            # update_cache_value(cache_name, **{'is_lock': False, 'status': S_FAILED})
             logger.exception(e)
             return Response({'detail': '任务启动失败'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -241,10 +251,17 @@ class Test(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request, format=None):
-        from common.apis import gitlab_api
-        branch = gitlab_api.get_branch_info('cainanjie/devops-server', 'master')
-        print(branch.commit.get('id'))
-        print(branch.commit.get('message'))
+        saltapi.state_sls('devops', **{
+            'pillar':
+                {'project': 'devops-server',
+                 'order_id': 'ba74e384-513f-4f63-b664-3727444a8172',
+                 'env': 'test',
+                 'devops_env': settings.ENV,
+                 'private_vars': {'devops': {'xenv': '1111111'}}
+                 },
+            'mods': 'devops-server',
+            'saltenv': 'deploy'
+        })
         return Response('OK', status=200)
 
 

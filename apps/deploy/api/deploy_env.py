@@ -4,6 +4,9 @@ __datetime__ = '2019/6/11 2:19 PM'
 from rest_framework import viewsets, permissions, mixins, status, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.exceptions import APIException
+from django.db.models.deletion import ProtectedError
+
 
 from common.utils import logger
 from ..models import DeployEnv
@@ -30,6 +33,12 @@ class DeployEnvViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         else:
             return super(DeployEnvViewSet, self).list(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            return super(DeployEnvViewSet, self).destroy(request, *args, **kwargs)
+        except ProtectedError:
+            raise APIException(detail='请先删除其他关联', code=500)
 
 
     @action(detail=False, methods=['get'], name='deploy-env-tree',url_path='tree')
