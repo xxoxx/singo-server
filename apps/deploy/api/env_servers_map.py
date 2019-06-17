@@ -23,7 +23,9 @@ class EnvServersMapViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         # 不需要分页
         if self.request.GET.get('all') == 'true':
-            serializer = self.get_serializer(self.queryset, many=True)
+            # 不可这行代码会去读取缓存中的数据,删掉的数据还能被返回
+            queryset = self.filter_queryset(self.get_queryset())
+            serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         else:
             return super(EnvServersMapViewSet, self).list(request, *args, **kwargs)

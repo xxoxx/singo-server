@@ -28,8 +28,8 @@ class DeployEnvViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         # 不需要分页
         if self.request.GET.get('all') == 'true':
-            # queryset = self.filter_queryset(self.get_queryset())
-            serializer = self.get_serializer(self.queryset, many=True)
+            queryset = self.filter_queryset(self.get_queryset())
+            serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         else:
             return super(DeployEnvViewSet, self).list(request, *args, **kwargs)
