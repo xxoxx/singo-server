@@ -45,12 +45,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
         :return:
         '''
         obj = self.get_object()
-        env_code = request.GET.get('env_code')
+        env_id = request.GET.get('env_id')
 
-        if not env_code:
+        if not env_id:
            return Response([])
 
-        queryset = obj.project_servers.all().filter(parent_env__code=env_code)
+        queryset = obj.project_maps.all().filter(parent_env=env_id)
         serializer = EnvServersMapSerializer(queryset, many=True)
 
         return Response(serializer.data)
