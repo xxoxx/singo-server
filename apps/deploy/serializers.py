@@ -31,6 +31,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         data = []
         for env_server_map in instance.project_maps.all():
             d = {
+                'id': env_server_map.id,
                 'name': env_server_map.name,
                 'parent_ent': env_server_map.parent_env.name if env_server_map.parent_env else None,
                 'sub_env': env_server_map.sub_env.name if env_server_map.sub_env else None,
@@ -92,6 +93,7 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
         data = []
         for env_server_map in instance.deploy_maps.all():
             d = {
+                'id': env_server_map.id,
                 'name': env_server_map.name,
                 'parent_ent': env_server_map.parent_env.name if env_server_map.parent_env else None,
                 'sub_env': env_server_map.sub_env.name if env_server_map.sub_env else None,
