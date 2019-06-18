@@ -135,7 +135,7 @@ class EnvServersMapSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super(EnvServersMapSerializer, self).to_representation(instance)
-        ret['parent_env'] = {'name': instance.parent_env.name,'id':instance.parent_env.id}
+        ret['parent_env'] = {'id':instance.parent_env.id, 'name': instance.parent_env.name}
         ret['sub_env'] = {'id': instance.sub_env.id, 'name': instance.sub_env.name} if instance.sub_env else None
         ret['servers'] = [{'id': s.id, 'hostname': s.hostname, 'saltID':s.saltID, 'ip': s._IP}
                           for s in instance.servers.all()]

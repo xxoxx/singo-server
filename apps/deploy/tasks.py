@@ -234,7 +234,7 @@ class DeployJob(object):
             self.f.close()
 
 
-def timing(f):
+def timings(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         try:
@@ -263,7 +263,7 @@ def timing(f):
     return wrapper
 
 @my_scheduler_run_now('date')
-@timing
+@timings
 def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
     try:
         deploy_job = DeployJob(cache_name, order_obj, assign_to)
@@ -298,7 +298,7 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
         return False
 
 
-# def timing(*args, **kwargs):
+# def timings(*args, **kwargs):
 #     def wrapper(f):
 #         def inner(*a, **k):
 #             start = time()

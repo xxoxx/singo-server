@@ -210,21 +210,31 @@ class SaltStateSLSWebhook(BaseDeployAPIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+def test(obj):
+    print(obj.title)
+
 class Test(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request, format=None):
-        saltapi.state_sls('devops', **{
-            'pillar':
-                {'project': 'devops-server',
-                 'order_id': 'ba74e384-513f-4f63-b664-3727444a8172',
-                 'env': 'test',
-                 'devops_env': settings.ENV,
-                 'private_vars': {'devops': {'xenv': '1111111'}}
-                 },
-            'mods': 'devops-server',
-            'saltenv': 'deploy'
-        })
+        from common.apscheduler import django_scheduler
+        from common.apis import saltapi
+        import datetime, time
+        # saltapi.state_sls('devops', **{
+        #     'pillar':
+        #         {'project': 'devops-server',
+        #          'order_id': 'ba74e384-513f-4f63-b664-3727444a8172',
+        #          'env': 'test',
+        #          'devops_env': settings.ENV,
+        #          'private_vars': {'devops': {'xenv': '1111111'}}
+        #          },
+        #     'mods': 'devops-server',
+        #     'saltenv': 'deploy'
+        # })
+        obj = DeploymentOrder.objects.get(pk='b918fad48014456aa62dfc653ad7a963')
+        id = str(hash(time.time()))
+        django_scheduler.add_job(saltapi.cmd_run, 'interval', id=id, minutes=5,
+                                 args=(['devops'],), kwargs={'arg': 'date'})
         return Response('OK', status=200)
 
 

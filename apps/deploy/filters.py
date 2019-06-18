@@ -2,7 +2,8 @@ __author__ = 'singo'
 __datetime__ = '2019/4/28 11:11 AM '
 
 
-from django_filters import ChoiceFilter, CharFilter, rest_framework, IsoDateTimeFilter
+from django_filters import ChoiceFilter, CharFilter, \
+    rest_framework, IsoDateTimeFilter, BooleanFilter
 from django.db import models as django_models
 
 from .models import DeploymentOrder, STATUS, TYPE, History, HISTORY_STATUS, DeployEnv, EnvServersMap
@@ -34,6 +35,14 @@ class EnvServersMapFilter(rest_framework.FilterSet):
     class Meta:
         model = EnvServersMap
         fields = ['name', 'parent', 'sub']
+
+
+class DeployEnvFilter(rest_framework.FilterSet):
+    is_parent = BooleanFilter(field_name='parent', lookup_expr='isnull',
+                              label='是否为父环境')
+    class Meta:
+        model = DeployEnv
+        fields = ['name', 'parent']
 
 
 class DeployHistoryFilter(rest_framework.FilterSet):

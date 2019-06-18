@@ -12,6 +12,7 @@ from common.utils import logger
 from ..models import DeployEnv
 from ..serializers import DeployEnvSerializer
 from common.pagination import CustomPagination
+from ..filters import DeployEnvFilter
 
 
 
@@ -21,8 +22,10 @@ class DeployEnvViewSet(viewsets.ModelViewSet):
     serializer_class = DeployEnvSerializer
     queryset = DeployEnv.objects.all()
     pagination_class = CustomPagination
+    filter_class = DeployEnvFilter
     search_fields = ('name',)
     ordering_fields = ('id',)
+
 
 
     def list(self, request, *args, **kwargs):
