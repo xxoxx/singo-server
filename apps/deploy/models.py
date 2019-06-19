@@ -28,6 +28,7 @@ class Project(models.Model):
     # servers = models.ManyToManyField(Server, blank=True, verbose_name='主机')
     project_maps = models.ManyToManyField('EnvServersMap', blank=True, verbose_name='关联主机')
     jenkins_job = models.CharField(max_length=128, verbose_name='jenkis job')
+    jenkins_params = models.CharField(max_length=128, null=True, blank=True, verbose_name='jenkis 参数')
     gitlab_project = models.CharField(max_length=128, verbose_name='gitlab project')
     package_url = models.CharField(max_length=128, null=False, blank=False, verbose_name='jenkins 打包路径')
     create_time = models.DateTimeField(auto_now_add=True, verbose_name=u'创建时间')
@@ -169,7 +170,7 @@ def validate_sub(parent):
 
 
 class EnvServersMap(models.Model):
-    name = models.CharField(max_length=56, verbose_name='名称', unique=True)
+    name = models.CharField(max_length=56, verbose_name='名称')
     parent_env = models.ForeignKey('DeployEnv', null=False, related_name='servers_parent_env',
                                    on_delete=models.PROTECT, validators=[validate_parent])
     sub_env = models.ForeignKey('DeployEnv', null=True, related_name='servers_sub_env',

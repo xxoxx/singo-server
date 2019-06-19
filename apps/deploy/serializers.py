@@ -108,13 +108,16 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
 
         return ret
 
-    def validate(self, data):
-        env = data.get('env')
-        deploy_maps = data.get('deploy_maps')
+    def validate_deploy_maps(self, data):
         # 根据发布环境过滤出project所拥有的env-servers
-        project_maps = data.get('project').project_maps.all().filter(parent_env__code=env.code)
+        allow_deploy_maps = self.instance.project.project_maps.all().filter(parent_env__code=self.instance.env.code)
 
-        if not set(deploy_maps).issubset(set(project_maps)):
+        # env = data.get('env')
+        # deploy_maps = data.get('deploy_maps')
+        # 根据发布环境过滤出project所拥有的env-servers
+        # project_maps = data.get('project').project_maps.all().filter(parent_env__code=env.code)
+
+        if not set(data).issubset(set(allow_deploy_maps)):
             raise serializers.ValidationError('部署服务器超出权限范围')
 
         return data
