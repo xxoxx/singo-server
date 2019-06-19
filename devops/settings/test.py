@@ -147,8 +147,8 @@ GITLABS = [
 JENKINS = {
     'URL': 'http://jenkins.ops.com',
     'USER': 'zhoujinliang',
-    'TOKEN': '117c911a35acf51e428e29f3ccb363f53f',
-    'URI': 'http://{}:{}@jenkins.ops.com'.format('zhoujinliang', '117c911a35acf51e428e29f3ccb363f53f')
+    'TOKEN': '113697d33c63c3020175ac94974e15e637',
+    'URI': 'http://{}:{}@jenkins.ops.com'.format('zhoujinliang', '113697d33c63c3020175ac94974e15e637')
 }
 
 DEPLOY = {
