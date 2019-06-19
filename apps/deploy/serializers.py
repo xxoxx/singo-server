@@ -90,6 +90,8 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
             'name': instance.project.name
         }
 
+        ret['env'] = instance.env.name
+
         data = []
         for env_server_map in instance.deploy_maps.all():
             d = {
