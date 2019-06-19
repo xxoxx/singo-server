@@ -3,9 +3,10 @@ DS_Store
 *.pyc
 *.pyo
 *.swp
+*.bak
 .env
 env
-env*
+env
 venv
 dist
 build

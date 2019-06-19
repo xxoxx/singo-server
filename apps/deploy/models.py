@@ -46,10 +46,11 @@ class DeploymentOrder(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     title = models.CharField(max_length=128, blank=False, null=False, verbose_name='标题')
     project = models.ForeignKey(Project, blank=False, null=False, related_name='order',
-                                verbose_name='项目',  on_delete=models.PROTECT)
+                                verbose_name='项目', on_delete=models.PROTECT)
     type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='类型')
     # env = models.IntegerField(choices=ENV, default=PRO, verbose_name='部署环境')
-    env = models.ForeignKey('DeployEnv', blank=False, null=False, verbose_name='部署环境', on_delete=models.PROTECT)
+    env = models.ForeignKey('DeployEnv', blank=False, null=False, verbose_name='部署环境',
+                            on_delete=models.PROTECT)
     branche = models.CharField(max_length=64, blank=False, null=False, verbose_name='分支')
     commit_id = models.CharField(max_length=64, blank=False, null=False, verbose_name='commit id')
     commit = models.CharField(max_length=256, blank=False, null=False, verbose_name='git commit')

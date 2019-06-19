@@ -103,6 +103,7 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
                             env_server_map.servers.all()]
             }
             data.append(d)
+
         ret['deploy_maps'] = data
 
         return ret
