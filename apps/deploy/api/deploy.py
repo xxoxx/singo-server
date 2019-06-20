@@ -231,10 +231,15 @@ class Test(APIView):
         #     'mods': 'devops-server',
         #     'saltenv': 'deploy'
         # })
-        obj = DeploymentOrder.objects.get(pk='b918fad48014456aa62dfc653ad7a963')
-        id = str(hash(time.time()))
-        django_scheduler.add_job(saltapi.cmd_run, 'interval', id=id, minutes=5,
-                                 args=(['devops'],), kwargs={'arg': 'date'})
+
+
+        # obj = DeploymentOrder.objects.get(pk='b918fad48014456aa62dfc653ad7a963')
+        # id = str(hash(time.time()))
+        # django_scheduler.add_job(saltapi.cmd_run, 'interval', id=id, minutes=5,
+        #                          args=(['devops'],), kwargs={'arg': 'date'})
+
+        from common.apis import jenkins_api
+        print(jenkins_api.build_job('devops-web', {'BRANCH': 'dev', 'ENV': 'prod11'}))
         return Response('OK', status=200)
 
 

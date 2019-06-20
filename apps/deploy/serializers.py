@@ -2,9 +2,12 @@ __author__ = 'singo'
 __datetime__ = '2019/4/26 4:27 PM '
 
 from rest_framework import serializers
+from rest_framework.exceptions import APIException
+from ast import literal_eval
+
 from .models import Project, DeploymentOrder, History, DeployEnv, EnvServersMap
 from common.apis import dingtalk_chatbot
-from .common import D_PENDING, D_REJECTED
+from .common import D_PENDING
 from common.utils import Bcolor
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -41,6 +44,19 @@ class ProjectSerializer(serializers.ModelSerializer):
             data.append(d)
         ret['project_maps'] = data
         return ret
+
+    # jenkins_params 字段必须能解析成字典类型
+    def validate_jenkins_params(self, data):
+        try:
+            if not data:
+                data = '{}'
+            else:
+                jenkins_params = literal_eval(data)
+                if type(jenkins_params) != dict:
+                    raise  Exception
+        except Exception as e:
+            raise serializers.ValidationError('无法解析的字符串')
+        return data
 
 
 class DeploymentOrderSerializer(serializers.ModelSerializer):
@@ -109,18 +125,31 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
         return ret
 
     def validate_deploy_maps(self, data):
-        # 根据发布环境过滤出project所拥有的env-servers
-        allow_deploy_maps = self.instance.project.project_maps.all().filter(parent_env__code=self.instance.env.code)
+        try:
+            project_obj = self.instance.project if self.instance else Project.objects.get(pk=self.initial_data.get('project'))
+            env = self.instance.env if self.instance else self.initial_data.get('env')
+        except Exception as e:
+            raise APIException('服务器内部错误', code=500)
 
-        # env = data.get('env')
-        # deploy_maps = data.get('deploy_maps')
         # 根据发布环境过滤出project所拥有的env-servers
-        # project_maps = data.get('project').project_maps.all().filter(parent_env__code=env.code)
+        allow_deploy_maps = project_obj.project_maps.all().filter(parent_env=env)
 
         if not set(data).issubset(set(allow_deploy_maps)):
             raise serializers.ValidationError('部署服务器超出权限范围')
 
         return data
+
+    # def validate(self, data):
+    #     self.instance
+    #     print(Bcolor.green(self.instance.project.project_maps.all()))
+    #     env = data.get('env')
+    #     deploy_maps = data.get('deploy_maps')
+    #     allow_deploy_maps = data.get('project').project_maps.all().filter(parent_env__code=env.code)
+    #
+    #     if not set(deploy_maps).issubset(set(allow_deploy_maps)):
+    #         raise serializers.ValidationError('部署服务器超出权限范围')
+    #
+    #     return data
 
 
 class HistorySerializer(serializers.ModelSerializer):

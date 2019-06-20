@@ -8,6 +8,7 @@ from functools import wraps
 from django.conf import settings
 import json
 from django.db import connections
+from ast import literal_eval
 
 from common.apscheduler import my_scheduler_run_now
 from common.apis import jenkins_api, dingtalk_chatbot
@@ -128,8 +129,18 @@ class DeployJob(object):
             line_number = 0
             job_name = self.order_obj.project.jenkins_job
             build_number = jenkins_api.get_next_build_number(job_name)
-            queue_id = jenkins_api.build_job(job_name, parameters={'BRANCH': self.order_obj.branche,
-                                                                   'ENV':  self.order_obj.env.code})
+            # 获取jenkins参数
+            parameters = literal_eval(self.order_obj.project.jenkins_params)
+            parameters['BRANCH'] = self.order_obj.branche
+            # queue_id = jenkins_api.build_job(job_name, parameters={'BRANCH': self.order_obj.branche, 'ENV':  self.order_obj.env.code})
+            try:
+                queue_id = jenkins_api.build_job(job_name, parameters=parameters)
+            except Exception as e:
+                logger.exception(e)
+                self.f.write('> 启动jenkins任务失败\n')
+                self.f.write(str(e))
+                self.f.flush()
+                raise Exception('启动jenkins任务失败')
 
             update_cache_value(self.cache_name, self.deploy_cache, **{'build_number': build_number})
             self.set_step_cache(self.cache_name, self.deploy_cache)
