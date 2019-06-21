@@ -238,8 +238,13 @@ class Test(APIView):
         # django_scheduler.add_job(saltapi.cmd_run, 'interval', id=id, minutes=5,
         #                          args=(['devops'],), kwargs={'arg': 'date'})
 
-        from common.apis import jenkins_api
-        print(jenkins_api.build_job('devops-web', {'BRANCH': 'dev', 'ENV': 'prod11'}))
+        from common.apis import dingtalk_chatbot
+
+        dingtalk_chatbot.text_msg('wms')
+        time.sleep(5)
+        dingtalk_chatbot.text_msg('wms上线中')
+        dingtalk_chatbot.text_msg('wms上线成功')
+
         return Response('OK', status=200)
 
 
