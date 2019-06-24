@@ -209,10 +209,6 @@ class SaltStateSLSWebhook(BaseDeployAPIView):
             logger.exception(e)
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-
-def test(obj):
-    print(obj.title)
-
 class Test(APIView):
     permission_classes = (permissions.AllowAny,)
 
@@ -238,8 +234,8 @@ class Test(APIView):
         # django_scheduler.add_job(saltapi.cmd_run, 'interval', id=id, minutes=5,
         #                          args=(['devops'],), kwargs={'arg': 'date'})
 
-        from common.apis import jenkins_api
-        print(jenkins_api.build_job('devops-web', {'BRANCH': 'dev', 'ENV': 'prod11'}))
+        # from common.apis import jenkins_api
+        # print(jenkins_api.build_job('devops-web', {'BRANCH': 'dev', 'ENV': 'prod11'}))
         return Response('OK', status=200)
 
 

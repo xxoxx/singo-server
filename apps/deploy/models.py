@@ -78,7 +78,8 @@ class DeploymentOrder(models.Model):
         data = {}
         for deploy_map in self.deploy_maps.all():
             for s in deploy_map.servers.all():
-                data[s.saltID] = {'xenv': deploy_map.sub_env.code if deploy_map.sub_env else deploy_map.parent_env.code}
+                # data[s.saltID] = {'xenv': deploy_map.sub_env.code if deploy_map.sub_env else deploy_map.parent_env.code}
+                data[s.saltID] = {'xenv': deploy_map.code}
         return data
 
     # 获取服务器
@@ -95,6 +96,15 @@ class DeploymentOrder(models.Model):
     @property
     def servers_saltID(self):
         return ','.join(s.saltID for s in self.get_deploy_servers)
+
+    @property
+    def get_jk_env(self):
+        #如果只有只关联一条env-server,则返回子环境的code,没有就返回父环境的code
+        maps = self.deploy_maps.all()
+        if len(maps) == 1:
+            return maps[0].sub_env.code if maps[0].sub_env else maps[0].parent_env.code
+        else:
+            return self.env.code
 
     class Meta:
         verbose_name = '上线申请'
@@ -176,6 +186,7 @@ class EnvServersMap(models.Model):
     sub_env = models.ForeignKey('DeployEnv', null=True, related_name='servers_sub_env',
                                 on_delete=models.PROTECT, validators=[validate_sub])
     servers = models.ManyToManyField(Server, blank=True, verbose_name='关联主机')
+    code = models.CharField(max_length=56, verbose_name='code')
 
     def __str__(self):
         return self.name

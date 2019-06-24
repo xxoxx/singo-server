@@ -5,7 +5,6 @@ import requests
 import urllib3
 import time
 import logging
-from common.utils import Bcolor
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logger = logging.getLogger('devops')
