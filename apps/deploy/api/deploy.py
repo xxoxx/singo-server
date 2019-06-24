@@ -209,10 +209,6 @@ class SaltStateSLSWebhook(BaseDeployAPIView):
             logger.exception(e)
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-
-def test(obj):
-    print(obj.title)
-
 class Test(APIView):
     permission_classes = (permissions.AllowAny,)
 
@@ -237,13 +233,6 @@ class Test(APIView):
         # id = str(hash(time.time()))
         # django_scheduler.add_job(saltapi.cmd_run, 'interval', id=id, minutes=5,
         #                          args=(['devops'],), kwargs={'arg': 'date'})
-
-        from common.apis import dingtalk_chatbot
-
-        dingtalk_chatbot.text_msg('wms')
-        time.sleep(5)
-        dingtalk_chatbot.text_msg('wms上线中')
-        dingtalk_chatbot.text_msg('wms上线成功')
 
         return Response('OK', status=200)
 
