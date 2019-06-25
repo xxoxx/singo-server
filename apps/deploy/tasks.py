@@ -132,7 +132,7 @@ class DeployJob(object):
             # 获取jenkins参数
             parameters = literal_eval(self.order_obj.project.jenkins_params)
             parameters['BRANCH'] = self.order_obj.branche
-            parameters['ENV'] = self.order_obj.get_jk_env
+            parameters['ENV'] = self.order_obj.sub_env_code
             # queue_id = jenkins_api.build_job(job_name, parameters={'BRANCH': self.order_obj.branche, 'ENV':  self.order_obj.env.code})
             try:
                 queue_id = jenkins_api.build_job(job_name, parameters=parameters)

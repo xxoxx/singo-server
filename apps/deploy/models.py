@@ -78,8 +78,12 @@ class DeploymentOrder(models.Model):
         data = {}
         for deploy_map in self.deploy_maps.all():
             for s in deploy_map.servers.all():
-                # data[s.saltID] = {'xenv': deploy_map.sub_env.code if deploy_map.sub_env else deploy_map.parent_env.code}
-                data[s.saltID] = {'xenv': deploy_map.code}
+                data[s.saltID] = {
+                                    # 子环境或者父环境的env code
+                                    'xenv': deploy_map.sub_env.code if deploy_map.sub_env else deploy_map.parent_env.code,
+                                    # server env的code
+                                    'penv': deploy_map.code
+                                 }
         return data
 
     # 获取服务器
@@ -98,13 +102,12 @@ class DeploymentOrder(models.Model):
         return ','.join(s.saltID for s in self.get_deploy_servers)
 
     @property
-    def get_jk_env(self):
-        #如果只有只关联一条env-server,则返回子环境的code,没有就返回父环境的code
+    def sub_env_code(self):
         maps = self.deploy_maps.all()
-        if len(maps) == 1:
-            return maps[0].sub_env.code if maps[0].sub_env else maps[0].parent_env.code
-        else:
-            return self.env.code
+
+        if maps:
+            return maps[0].sub_env.code if maps[0].sub_env else None
+        return None
 
     class Meta:
         verbose_name = '上线申请'

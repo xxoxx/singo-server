@@ -125,6 +125,7 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
         return ret
 
     def validate_deploy_maps(self, data):
+        # 这里可能需要改成子环境一致
         try:
             project_obj = self.instance.project if self.instance else Project.objects.get(pk=self.initial_data.get('project'))
             env = self.instance.env if self.instance else self.initial_data.get('env')
