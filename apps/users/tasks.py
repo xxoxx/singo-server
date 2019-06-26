@@ -3,7 +3,7 @@ import logging
 
 from common.utils import validate_ip, get_ip_city
 from .models import LoginLog, User
-from common import scheduler
+from common.apscheduler import scheduler
 from common.apscheduler import scheduler_run_now
 
 logger = logging.getLogger('devops')

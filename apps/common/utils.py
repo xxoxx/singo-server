@@ -93,27 +93,27 @@ class Bcolor(object):
         return inner
 
     @staticmethod
-    def red(text):
+    def red(text=None):
         return  Bcolor.color(31)(text)
 
     @staticmethod
-    def b_red(text):
+    def b_red(text=None):
         return  Bcolor.color(41)(text)
 
     @staticmethod
-    def yellow(text):
+    def yellow(text=None):
         return Bcolor.color(33)(text)
 
     @staticmethod
-    def b_yellow(text):
+    def b_yellow(text=None):
         return Bcolor.color(43)(text)
 
     @staticmethod
-    def green(text):
+    def green(text=None):
         return Bcolor.color(32)(text)
 
     @staticmethod
-    def b_green(text):
+    def b_green(text=None):
         return Bcolor.color(42)(text)
 
 def send_mail_common(subject, message, recipient_list):

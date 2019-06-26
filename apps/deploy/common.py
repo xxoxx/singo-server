@@ -10,6 +10,10 @@ ONLINE  = 0
 ROLLBACK  = 1
 REONLONE  = 2
 
+# 发布方式
+DOCKER = 0
+PACKAGE = 1
+
 CACHE_TIMEOUT = 24*3600
 
 # DeploymentOrder 的状态

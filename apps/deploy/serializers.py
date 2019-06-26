@@ -125,6 +125,11 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
         return ret
 
     def validate_deploy_maps(self, data):
+        # 子环境必须相同
+        sub_env_list = [env_server.sub_env for env_server in data]
+        if (len(set(sub_env_list))) != 1:
+            raise serializers.ValidationError('不能发布环境不同类型的服务器')
+
         try:
             project_obj = self.instance.project if self.instance else Project.objects.get(pk=self.initial_data.get('project'))
             env = self.instance.env if self.instance else self.initial_data.get('env')
@@ -133,7 +138,7 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
 
         # 根据发布环境过滤出project所拥有的env-servers
         allow_deploy_maps = project_obj.project_maps.all().filter(parent_env=env)
-
+        # 发布服务器必须是项目所拥有的服务器
         if not set(data).issubset(set(allow_deploy_maps)):
             raise serializers.ValidationError('部署服务器超出权限范围')
 
