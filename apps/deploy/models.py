@@ -22,6 +22,11 @@ TYPE = (
     (REONLONE, '重新上线')
 )
 
+DEPLOY = (
+    (0, 'docker'),
+    (1, 'package')
+)
+
 class Project(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     name = models.CharField(max_length=64, unique=True, verbose_name='项目名')
@@ -34,6 +39,7 @@ class Project(models.Model):
     create_time = models.DateTimeField(auto_now_add=True, verbose_name=u'创建时间')
     creator = models.ForeignKey(User, null=False, related_name='project_creator', verbose_name='创建者')
     desc = models.TextField(max_length=256, blank=True, null=True, verbose_name='描述')
+    deploy_type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='类型')
 
 
     def __str__(self):
