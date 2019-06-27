@@ -246,6 +246,7 @@ class DeployJob(object):
                  'order_id': str(self.order_obj.id),
                  'env': self.order_obj.env.code,
                  'devops_env': settings.ENV,
+                 'tag': self.order_obj.version,
                  'private_vars': self.order_obj.get_private_vars
                  },
             'mods': self.order_obj.project.name,
@@ -333,7 +334,7 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
         deploy_job.make_docker_image()
 
         ##################执行SLS文件################
-        #deploy_job.deploy_state_sls()
+        deploy_job.deploy_state_sls()
 
         ##################完成发布################
         deploy_job.end_job(order_data={'status': D_SUCCESSFUL, 'result_msg': '上线完成', 'complete_time': datetime.now()},
