@@ -88,9 +88,9 @@ class DeploymentOrder(models.Model):
             for s in deploy_map.servers.all():
                 data[s.saltID] = {
                                     # 子环境或者父环境的env code
-                                    'xenv': deploy_map.sub_env.code if deploy_map.sub_env else deploy_map.parent_env.code,
+                                    's_env': deploy_map.sub_env.code if deploy_map.sub_env else deploy_map.parent_env.code,
                                     # server env的code
-                                    'penv': deploy_map.code
+                                    'p_env': deploy_map.code
                                  }
         return data
 
