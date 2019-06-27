@@ -312,54 +312,62 @@ a={'return': [
 # server = Jenkins(URI)
 # server.build_job(name='devops-web', parameters={'BRANCH': 'master', 'ENV':'prod'})
 
-import json, requests
-class OAAPI(object):
+rets = {
+  'return': [{
+    'devops': {
+      'cmd_|-build_docker_image_|-docker build -t reg.ztocwst.com:10080/ztyc/ztocwst-wms:0.112 ._|-run': {
+        'comment': 'Command "docker build -t reg.ztocwst.com:10080/ztyc/ztocwst-wms:0.112 ." run',
+        'name': 'docker build -t reg.ztocwst.com:10080/ztyc/ztocwst-wms:0.112 .',
+        'start_time': '17:30:51.988460',
+        'result': True,
+        'duration': 4448.456,
+        '__run_num__': 1,
+        '__sls__': 'make_docker_image',
+        'changes': {
+          'pid': 12853,
+          'retcode': 0,
+          'stderr': '',
+          'stdout': 'Sending build context to Docker daemon  129.8MB\r\r\nStep 1/5 : FROM ztyctomcat:0.0.1\n ---> d7081283cd19\nStep 2/5 : MAINTAINER wsli\n ---> Using cache\n ---> 21359cdbc2e6\nStep 3/5 : COPY ROOT /usr/local/tomcat/webapps/ROOT\n ---> Using cache\n ---> df35f9f5e266\nStep 4/5 : EXPOSE 8080\n ---> Using cache\n ---> 6ceffcaf1253\nStep 5/5 : ENTRYPOINT ["/usr/local/tomcat/bin/catalina.sh","run"]\n ---> Using cache\n ---> f7a8fe257a66\nSuccessfully built f7a8fe257a66\nSuccessfully tagged reg.ztocwst.com:10080/ztyc/ztocwst-wms:0.112'
+        },
+        '__id__': 'build_docker_image'
+      },
+      'cmd_|-push_docker_image_|-docker push reg.ztocwst.com:10080/ztyc/ztocwst-wms:0.112_|-run': {
+        'comment': 'Command "docker push reg.ztocwst.com:10080/ztyc/ztocwst-wms:0.112" run',
+        'name': 'docker push reg.ztocwst.com:10080/ztyc/ztocwst-wms:0.112',
+        'start_time': '17:30:56.437747',
+        'result': True,
+        'duration': 353.856,
+        '__run_num__': 2,
+        '__sls__': 'make_docker_image',
+        'changes': {
+          'pid': 12891,
+          'retcode': 0,
+          'stderr': '',
+          'stdout': 'The push refers to repository [reg.ztocwst.com:10080/ztyc/ztocwst-wms]\nf746fd30b425: Preparing\ne1632db885a4: Preparing\nf84e85a166f0: Preparing\nc642090efdf4: Preparing\n54b386bcbde5: Preparing\n256a7af3acb1: Preparing\n256a7af3acb1: Waiting\nf84e85a166f0: Layer already exists\ne1632db885a4: Layer already exists\n54b386bcbde5: Layer already exists\nf746fd30b425: Layer already exists\nc642090efdf4: Layer already exists\n256a7af3acb1: Layer already exists\n0.112: digest: sha256:671e8fec5869798070edbd66360a5042586250645a2972942816916b00243497 size: 1582'
+        },
+        '__id__': 'push_docker_image'
+      },
+      'cmd_|-extract_app_|-unzip -o /srv/salt/deploy/packages/ztocwst-wms.war -d /srv/salt/deploy/ztocwst-wms/app_dir/ROOT_|-run': {
+        'comment': 'Command "unzip -o /srv/salt/deploy/packages/ztocwst-wms.war -d /srv/salt/deploy/ztocwst-wms/app_dir/ROOT" run',
+        'name': 'unzip -o /srv/salt/deploy/packages/ztocwst-wms.war -d /srv/salt/deploy/ztocwst-wms/app_dir/ROOT',
+        'start_time': '17:30:49.132019',
+        'result': True,
+        'duration': 2855.077,
+        '__run_num__': 0,
+        '__sls__': 'make_docker_image',
+        'changes': {
+          'pid': 12844,
+          'retcode': 0,
+          'stderr': '',
+          'stdout': 'VALUE_TRIMMED'
+        },
+        '__id__': 'extract_app'
+      }
+    }
+  }]
+}
 
-    def __init__(self, url, username, password, timeout=30):
-        self.url = url
-        self.username = username
-        self.password = password
-        self.timeout = timeout
-        self.token_expire = None
-        # self.token = self.get_token()
-        self.token = 'ade45486-c1d5-4c05-b442-03b54391fd65'
+rets = rets.get('return', [])[0].get('devops')
 
-    def get_token(self, prefix='token'):
-
-        data = json.dumps({ "userName": self.username, "password": self.password})
-        headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-        token_url = '{}{}'.format(self.url, prefix)
-
-        try:
-            req = requests.post(token_url, headers=headers,
-                                data=data, verify=False, timeout=self.timeout)
-            if req.status_code == 200:
-                print(req.json())
-                return req.json().get('id')
-        except Exception as e:
-            print(e)
-
-        return None
-
-
-    def user_auth(self, username, password):
-        data = {
-            'username': username,
-            'password': password,
-            'token': self.token
-        }
-
-        params = {
-            'headers': { 'Accept': 'application/json' },
-            'url': self.url+'userAuth/userAuth/',
-            'params': { 'token': self.token },
-            'timeout': self.timeout,
-            'json': data,
-            'verify': False
-        }
-
-        ret = requests.post(**params)
-        return ret.json()
+for k, v in rets.items():
+    print(v.get('result'))

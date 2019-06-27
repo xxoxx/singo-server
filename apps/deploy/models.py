@@ -22,9 +22,9 @@ TYPE = (
     (REONLONE, '重新上线')
 )
 
-DEPLOY = (
-    (0, 'docker'),
-    (1, 'package')
+DEPLOY_TPYE = (
+    (DOCKER, 'docker'),
+    (PACKAGE, 'package')
 )
 
 class Project(models.Model):
@@ -39,7 +39,8 @@ class Project(models.Model):
     create_time = models.DateTimeField(auto_now_add=True, verbose_name=u'创建时间')
     creator = models.ForeignKey(User, null=False, related_name='project_creator', verbose_name='创建者')
     desc = models.TextField(max_length=256, blank=True, null=True, verbose_name='描述')
-    deploy_type = models.IntegerField(choices=TYPE, default=ONLINE, verbose_name='类型')
+    deploy_type = models.IntegerField(choices=DEPLOY_TPYE, default=ONLINE, verbose_name='类型')
+    version = models.FloatField(default=0.01, verbose_name='当前版本')
 
 
     def __str__(self):
@@ -74,6 +75,7 @@ class DeploymentOrder(models.Model):
     result_msg = models.TextField(blank=True, verbose_name='结果')
     deploy_times = models.IntegerField(default=0, verbose_name='部署次数')
     deploy_maps = models.ManyToManyField('EnvServersMap', blank=True, verbose_name='部署主机')
+    version = models.FloatField(default=0.01, verbose_name='发布版本')
 
 
     def __str__(self):
@@ -150,6 +152,7 @@ class History(models.Model):
     end = models.DateTimeField(null=True, verbose_name='结束时间')
     log_file = models.CharField(max_length=128, verbose_name='部署日志')
     error_msg = models.TextField(null=True, verbose_name='异常信息')
+    version = models.FloatField(default=0.01, verbose_name='发布版本')
 
     def __str__(self):
         return self.title
