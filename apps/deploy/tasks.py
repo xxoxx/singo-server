@@ -113,7 +113,7 @@ class DeployJob(object):
     def make_docker_image(self):
         if self.order_obj.project.deploy_type != DOCKER:
             return None
-        
+
         logger.debug('开始生成docker镜像')
         self.f.write('> 开始生成docker镜像\n')
         self.f.flush()
