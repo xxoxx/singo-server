@@ -41,7 +41,7 @@ elif ENV == 'pro':
     DEBUG = False
     SECRET_KEY = '=9p_gjl_d3*0-do^2%utnxqqp)i*yg5ma3z4&_el8m0v5!@x7r'
     FRONT_END_URL = 'http://uz.ops.com'
-if ENV == 'dev':
+elif ENV == 'dev':
     DEBUG = True
     SECRET_KEY = '%u6kxw-a4k-*87bd1)uu^9s-h141zq)o!a#kjval5s&^#$#q)#'
     FRONT_END_URL = 'http://127.0.0.1:9528'
