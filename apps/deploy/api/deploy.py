@@ -228,6 +228,16 @@ class Test(APIView):
         #     'saltenv': 'deploy'
         # })
 
+        saltapi.state_sls('devops', **{
+            'pillar':
+                {'project': 'ztocwst-wms',
+                 'env': 'test',
+                 'tag': '0.112'
+                 },
+            'mods': 'make_docker_image',
+            'saltenv': 'deploy'
+        })
+
 
         # obj = DeploymentOrder.objects.get(pk='b918fad48014456aa62dfc653ad7a963')
         # id = str(hash(time.time()))

@@ -12,7 +12,7 @@ from ast import literal_eval
 
 from common.apscheduler import my_scheduler_run_now
 from common.apis import jenkins_api, dingtalk_chatbot
-from .models import History, TYPE, HISTORY_STATUS
+from .models import History, TYPE
 from datetime import datetime, timedelta
 from .common import *
 from common.apis import saltapi, gitlab_api
@@ -30,6 +30,7 @@ class DeployJob(object):
         self.assign_to = assign_to
         # 设置第几次执行上线单
         self.order_obj.deploy_times += 1
+        self.minion = settings.DEPLOY.get('M_MINION')
 
         for conn in connections.all():
             conn.close_if_unusable_or_obsolete()
@@ -41,6 +42,8 @@ class DeployJob(object):
                 branch_info = gitlab_api.get_branch_info(self.order_obj.project.gitlab_project, self.order_obj.branche)
                 commit_id = branch_info.commit.get('id')
                 commit = branch_info.commit.get('message')
+                # 设置版本号
+                self.order_obj.version = self.order_obj.project.version
             else:
                 raise Exception
         except Exception as e:
@@ -83,7 +86,7 @@ class DeployJob(object):
         self.f.flush()
         return len(log)
 
-    def __deal_with_salt_ret(self,rets):
+    def __deal_with_salt_ret(self, rets):
         """
         判断sls是否执行成功
         :param rets:
@@ -105,6 +108,39 @@ class DeployJob(object):
             except:
                 continue
         return brief
+
+    # 生成docker镜像
+    def make_docker_image(self):
+        if self.order_obj.project.deploy_type != DOCKER:
+            return None
+        
+        logger.debug('开始生成docker镜像')
+        self.f.write('> 开始生成docker镜像\n')
+        self.f.flush()
+
+        minion = settings.DEPLOY.get('M_MINION')
+
+        rets = saltapi.state_sls(minion, **{
+            'pillar':
+                {'project': self.order_obj.project.name,
+                 'env': self.order_obj.env.code,
+                 'tag': self.order_obj.version
+                 },
+            'mods': 'make_docker_image',
+            'saltenv': 'deploy'
+        })
+
+        self.f.write(json.dumps(rets, indent=4))
+        logger.debug('执行生成docker镜像完成')
+        self.f.write('\n> 执行生成docker镜像完成\n')
+        self.f.flush()
+
+        rets = rets.get('return', [])[0].get(minion)
+
+        for k, v in rets.items():
+            if not v.get('result'):
+                raise Exception('生成docker镜像失败')
+
 
     @staticmethod
     def set_step_cache(cache_name, deploy_cache):
@@ -236,6 +272,10 @@ class DeployJob(object):
     def end_job(self, order_data=None, his_data=None, cache_data=None, write_msg=''):
         deploy_cache = cache.get(self.cache_name, {})
 
+        # 发布成功需要设置下一次版本号
+        if self.order_obj.status == D_SUCCESSFUL:
+            update_obj(self.order_obj.project, **{'version': self.order_obj+0.01})
+
         update_obj(self.order_obj, **order_data)
         update_cache_value(self.cache_name, deploy_cache, **cache_data)
         self.his_obj and update_obj(self.his_obj, **his_data)
@@ -284,6 +324,9 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
 
         #################jenkins构建################
         deploy_job.build()
+
+        ###################生成镜像##################
+        deploy_job.make_docker_image()
 
         ###################下载代码##################
         deploy_job.download_package()
