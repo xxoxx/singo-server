@@ -272,13 +272,14 @@ class DeployJob(object):
     def end_job(self, order_data=None, his_data=None, cache_data=None, write_msg=''):
         deploy_cache = cache.get(self.cache_name, {})
 
-        # 发布成功需要设置下一次版本号
-        if self.order_obj.status == D_SUCCESSFUL:
-            update_obj(self.order_obj.project, **{'version': self.order_obj+0.01})
 
         update_obj(self.order_obj, **order_data)
         update_cache_value(self.cache_name, deploy_cache, **cache_data)
         self.his_obj and update_obj(self.his_obj, **his_data)
+
+        # 发布成功需要设置下一次版本号
+        if self.order_obj.status == D_SUCCESSFUL:
+            update_obj(self.order_obj.project, **{'version': self.order_obj.version+0.01})
 
         if self.f:
             self.f.write('> {}\nEOF'.format(write_msg))
@@ -325,14 +326,14 @@ def start_job(cache_name, order_obj, assign_to, *args, **kwargs):
         #################jenkins构建################
         deploy_job.build()
 
-        ###################生成镜像##################
-        deploy_job.make_docker_image()
-
         ###################下载代码##################
         deploy_job.download_package()
 
+        ###################生成镜像##################
+        deploy_job.make_docker_image()
+
         ##################执行SLS文件################
-        deploy_job.deploy_state_sls()
+        #deploy_job.deploy_state_sls()
 
         ##################完成发布################
         deploy_job.end_job(order_data={'status': D_SUCCESSFUL, 'result_msg': '上线完成', 'complete_time': datetime.now()},

@@ -4,6 +4,7 @@ __datetime__ = '2019/4/26 4:27 PM '
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 from ast import literal_eval
+from rest_framework.validators import UniqueValidator
 
 from .models import Project, DeploymentOrder, History, DeployEnv, EnvServersMap
 from common.apis import dingtalk_chatbot
@@ -14,7 +15,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     """
     项目配置序列化类
     """
-
+    # name = serializers.CharField(max_length=64, label='项目名', validators=[UniqueValidator(queryset=Project.objects.all())])
     creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
@@ -57,6 +58,8 @@ class ProjectSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise serializers.ValidationError('无法解析的字符串')
         return data
+
+
 
 
 class DeploymentOrderSerializer(serializers.ModelSerializer):
@@ -143,6 +146,11 @@ class DeploymentOrderSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('部署服务器超出权限范围')
 
         return data
+
+    def create(self, validated_data):
+        # 设置要发布的版本号
+        validated_data['version'] = validated_data['project'].version
+        return  super(DeploymentOrderSerializer, self).create(validated_data)
 
     # def validate(self, data):
     #     self.instance
