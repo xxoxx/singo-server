@@ -13,47 +13,11 @@ from rest_framework.permissions import AllowAny
 
 from ..tasks import write_login_log
 from ..tasks import set_last_login
-from common.apis import oaapi
 from common.utils import logger
 
 
 jwt_response_payload_handler = api_settings.JWT_RESPONSE_PAYLOAD_HANDLER
 User = get_user_model()
-
-def os_userinfo(username):
-    userinfo = oaapi.get_userinfo(username)
-    logger.info(userinfo)
-    data = {}
-    if userinfo:
-        data = {
-            'username': userinfo.get('loginName'),
-            'name': userinfo.get('name'),
-            'email': userinfo.get('emailAddress') if userinfo.get('emailAddress') else '{}@cwst.com'.format(username),
-            'phone': userinfo.get('telNumber')
-        }
-
-    return data
-
-def oa_login(f):
-    def inner(self, request, *args, **kwargs):
-        username = request.data.get('username')
-        password = request.data.get('password')
-
-        #验证OA中的账号
-        if oaapi.user_auth(username, password):
-            logger.info('OA账号:{},{}'.format(username, password))
-            try:
-                # 从本地读取或者创建账号
-                user = User.objects.get_or_create(username=username, defaults=os_userinfo(username))[0]
-                # 从OA同步密码
-                if not user.check_password(password):
-                    user.set_password(password)
-                    user.save()
-            except Exception as e:
-                logger.critical(str(e))
-
-        return f(self, request, *args, **kwargs)
-    return inner
 
 class ObtainAuthTokenAndLogging(ObtainAuthToken):
     '''
@@ -74,7 +38,6 @@ class ObtainAuthTokenAndLogging(ObtainAuthToken):
 
 class obtainJwtTokenAndLogging(ObtainJSONWebToken):
     # 获取用户JWT的token并记录日志
-    @oa_login
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         serializer = self.get_serializer(data=request.data)
