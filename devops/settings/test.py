@@ -103,14 +103,6 @@ SALTAPI = {
     'PASSWORD': 'saltapi'
 }
 
-# OA API
-
-OAAPI = {
-    'URL': 'http://oa.ztocwst.com:8000/seeyon/rest/',
-    'USERNAME': 'rest',
-    'PASSWORD': 'Lemon1912'
-}
-
 # LDAP API
 
 LADPAPI = {
