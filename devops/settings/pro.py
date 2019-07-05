@@ -103,10 +103,18 @@ SALTAPI = {
     'PASSWORD': 'saltapi'
 }
 
+# OA API
+
+OAAPI = {
+    'URL': 'http://oa.sdsad.com:8000/seeyon/rest/',
+    'USERNAME': 'rest',
+    'PASSWORD': '11111'
+}
+
 # LDAP API
 
 LADPAPI = {
-    'LDAP_HOST': '172.16.102.18:389',
+    'LDAP_HOST': '10.16.10.8:389',
     'LDAP_USE_SSL': False,
     'LDAP_SEARCH_FILTER': 'uid={uid}',
     'LDAP_BASE_DC': 'dc=ztyc,dc=net',
@@ -123,7 +131,7 @@ CACHES = {
 }
 
 SQLAUDIT = {
-    'HOST': '172.16.102.31',
+    'HOST': '12.16.12.31',
     'PORT': 27017,
     'USERNAME': 'dba',
     'PASSWORD': 'dba'
@@ -132,11 +140,11 @@ SQLAUDIT = {
 GITLABS = [
     {
         'URL': 'http://git.ops.com',
-        'TOKEN': 'gsdU_1zEq5Cmoq3seGSF'
+        'TOKEN': 'gsdsU_1zEq5Cssmoq3seGSF'
     },
     {
-        'URL': 'http://172.16.100.189',
-        'TOKEN': 'FZKRMxowyvRfExDLmKp9'
+        'URL': 'http://12.16.10.19',
+        'TOKEN': 'FZKRMxowyvRfExDLmKp91112'
     }
 ]
 
@@ -154,5 +162,5 @@ DEPLOY = {
 }
 
 DINGTALK_CHATBOT = {
-    'URI': 'https://oapi.dingtalk.com/robot/send?access_token=4eb821a3f60dd2e0fe81b2fe330a12ac830af5856839f71a9e7ddcf005992ffb'
+    'URI': 'https://oapi.dingtalk.com/robot/send?access_token=4eb821a60dd2e0fe81b2fe33212ac830af5856839f71a9e7ddcf005992ffb'
 }

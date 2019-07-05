@@ -103,10 +103,18 @@ SALTAPI = {
     'PASSWORD': 'saltapi'
 }
 
+# OA API
+
+OAAPI = {
+    'URL': 'http://oa.sdsad.com:8000/seeyon/rest/',
+    'USERNAME': 'rest',
+    'PASSWORD': '11111'
+}
+
 # LDAP API
 
 LADPAPI = {
-    'LDAP_HOST': '172.16.102.18:389',
+    'LDAP_HOST': '12.16.12.18:389',
     'LDAP_USE_SSL': False,
     'LDAP_SEARCH_FILTER': 'uid={uid}',
     'LDAP_BASE_DC': 'dc=ztyc,dc=net',
@@ -123,7 +131,7 @@ CACHES = {
 }
 
 SQLAUDIT = {
-    'HOST': '172.16.102.31',
+    'HOST': '12.16.92.31',
     'PORT': 27017,
     'USERNAME': 'dba',
     'PASSWORD': 'dba'
@@ -132,15 +140,15 @@ SQLAUDIT = {
 GITLABS = [
     {
         'URL': 'http://git.ops.com',
-        'TOKEN': 'gsdU_1zEq5Cmoq3seGSF'
+        'TOKEN': 'gsdU_1q5uCmoq3seGSF'
     }
 ]
 
 JENKINS = {
     'URL': 'http://jenkins.ops.com',
     'USER': 'zhoujinliang',
-    'TOKEN': '113697d33c63c3020175ac94974e15e637',
-    'URI': 'http://{}:{}@jenkins.ops.com'.format('zhoujinliang', '113697d33c63c3020175ac94974e15e637')
+    'TOKEN': '113697d3163c3020175ac94974e15e637',
+    'URI': 'http://{}:{}@jenkins.ops.com'.format('zhoujinliang', '113697d33c63c30201235ac94974e15e637')
 }
 
 DEPLOY = {
@@ -150,5 +158,5 @@ DEPLOY = {
 }
 
 DINGTALK_CHATBOT = {
-    'URI': 'https://oapi.dingtalk.com/robot/send?access_token=a21a1df49d416fd8cca372a3ce7b3435bd3604f0c1d25779116f96d46bb390b1'
+    'URI': 'https://oapi.dingtalk.com/robot/send?access_token=a21a1df49d416fd8cca371a3ce7b3415bd3604f0c1d25779116f96d46bb390b1'
 }
