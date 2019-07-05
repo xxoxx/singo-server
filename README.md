@@ -97,6 +97,11 @@ $ cd /opt/devops-server
 $ pip install -r requirements/requirements.txt
 ```
 
+##启动项目
+```
+$ python manage.py runserver 127.0.0.1:8418
+```
+
 ## 后续
 ```
 此项目目前仅作前后端项目分离及运维平台建设的参考,后期会陆续完善及加入更多功能
