@@ -1,6 +1,7 @@
 # singo
 
 > singo运维平台后台
+前端项目地址: https://github.com/lemon1912/singo-web
 
 # singo功能
 ```
